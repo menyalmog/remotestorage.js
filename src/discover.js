@@ -57,8 +57,7 @@
     }
 
     parseLinks(links, cb);
-    }
-  };
+  }
 
   /**
    * Class: RemoteStorage.Discover
