@@ -268,6 +268,7 @@
         i++;
         if (i >= n) {
           this._init();
+          console.log('done cleaning up, emitting disconnected and disconnect events');
           this._emit('disconnected');
           this._emit('disconnect');// DEPRECATED?
         }

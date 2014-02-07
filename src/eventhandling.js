@@ -9,6 +9,13 @@
      * Install an event handler for the given event name.
      */
     addEventListener: function(eventName, handler) {
+      if (typeof(eventName) !== 'string') {
+        throw new Error('argument eventName should be a string');
+      }
+      if (typeof(handler) !== 'function') {
+        throw new Error('argument handler should be a function');
+      }
+      console.log('adding event listener', eventName, handler);
       this._validateEvent(eventName);
       this._handlers[eventName].push(handler);
     },
@@ -32,6 +39,7 @@
     _emit: function(eventName) {
       this._validateEvent(eventName);
       var args = Array.prototype.slice.call(arguments, 1);
+      console.log('emitting to handlers', eventName, args, this._handler, this);
       this._handlers[eventName].forEach(function(handler) {
         handler.apply(this, args);
       });

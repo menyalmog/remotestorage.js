@@ -91,7 +91,7 @@
       console.error("webfinger error", arguments, '(', url, ')');
       tryOne();
     };
-    xhr.onload = webfingerOnload;
+    xhr.onload = webfingerOnload(xhr, callback);
     xhr.send();
   };
 

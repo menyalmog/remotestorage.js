@@ -186,7 +186,6 @@
           try {
             parentPath = this.getParentPath(node.path);
           } catch(e) {
-            console.log('WARNING: can\'t get parentPath of', node.path);
             //node.path is already '/', can't take parentPath
           }
           if (parentPath && this.access.checkPath(parentPath, 'r')) {
@@ -780,7 +779,13 @@
   };
 
   RemoteStorage.prototype.stopSync = function() {
-    this.sync.stopped = true;
+    if (this.sync) {
+      console.log('stopping sync');
+      this.sync.stopped = true;
+    } else {
+      console.log('will instantiate sync stopped');
+      this.syncStopped = true;
+    }
  };
 
   var syncCycleCb;
@@ -791,6 +796,11 @@
         remoteStorage.sync = new RemoteStorage.Sync(
             remoteStorage.local, remoteStorage.remote, remoteStorage.access,
             remoteStorage.caching);
+        if (remoteStorage.syncStopped) {
+          console.log('instantiating sync stopped');
+          remoteStorage.sync.stopped = true;
+          delete remoteStorage.syncStopped;
+        }
       }  
       remoteStorage.syncCycle();
     };

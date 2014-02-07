@@ -11,6 +11,10 @@
 
   function stateSetter(widget, state) {
     return function() {
+      console.log('setting state', state, arguments);
+      if(state === 'initial') {
+        throw new Error('why?');
+      }
       if (hasLocalStorage) {
         localStorage[LS_STATE_KEY] = state;
       }
@@ -36,6 +40,7 @@
       } else if (error instanceof RemoteStorage.Unauthorized){
         widget.view.setState('unauthorized');
       } else {
+        console.log('other error');
         widget.view.setState('error', [error]);
       }
     };
