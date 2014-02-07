@@ -7,8 +7,8 @@
   // cache loaded from localStorage
   var cachedInfo = {};
 
-  function parseLinks(links, cb) {
-    var link, authUrl, storageType;
+  function parseLinks(links, userAddress, cb) {
+    var link, authURL, storageType;
     
     links.forEach(function(l) {
       if (l.rel === 'remotestorage') {
@@ -27,6 +27,7 @@
       if (hasLocalStorage) {
         localStorage[SETTINGS_KEY] = JSON.stringify({ cache: cachedInfo });
       }
+      RemoteStorage.log('extracted', cachedInfo);
       cb(link.href, storageType, authURL);
     } else {
       RemoteStorage.log('could not find rel="remotestorage" link among profile links:', links);
@@ -34,10 +35,10 @@
     }
   }
 
-  function webfingerOnload(xhr, cb) {
+  function webfingerOnload(xhr, userAddress, cb) {
     var profile;
     if (xhr.status !== 200) {
-      RemoteStorage.log('webfinger responded with a '+xhr.status);
+      RemoteStorage.log('webfinger responded with a '+xhr.status, xhr);
       cb();
       return;
     }
@@ -45,7 +46,7 @@
     try {
       profile = JSON.parse(xhr.responseText);
     } catch(e) {
-      RemoteStorage.log('Failed to parse webfinger profile ' + xhr.responseText);
+      RemoteStorage.log('Failed to parse webfinger profile ' + xhr.responseText, xhr);
       cb();
       return;
     }
@@ -56,7 +57,8 @@
       return;
     }
 
-    parseLinks(links, cb);
+    RemoteStorage.log('calling parseLinks', profile.links);
+    parseLinks(profile.links, userAddress, cb);
   }
 
   /**
@@ -91,7 +93,9 @@
       console.error("webfinger error", arguments, '(', url, ')');
       tryOne();
     };
-    xhr.onload = webfingerOnload(xhr, callback);
+    xhr.onload = function() {
+      webfingerOnload(xhr, userAddress, callback);
+    };
     xhr.send();
   };
 
