@@ -91,7 +91,6 @@
     xhr.open('GET', url, true);
     xhr.onabort = xhr.onerror = function() {
       console.error("webfinger error", arguments, '(', url, ')');
-      tryOne();
     };
     xhr.onload = function() {
       webfingerOnload(xhr, userAddress, callback);
