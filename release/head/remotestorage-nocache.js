@@ -383,6 +383,7 @@
         i++;
         if (i >= n) {
           this._init();
+          console.log('done cleaning up, emitting disconnected and disconnect events');
           this._emit('disconnected');
           this._emit('disconnect');// DEPRECATED?
         }
@@ -786,6 +787,13 @@
      * Install an event handler for the given event name.
      */
     addEventListener: function(eventName, handler) {
+      if (typeof(eventName) !== 'string') {
+        throw new Error('argument eventName should be a string');
+      }
+      if (typeof(handler) !== 'function') {
+        throw new Error('argument handler should be a function');
+      }
+      console.log('adding event listener', eventName, handler);
       this._validateEvent(eventName);
       this._handlers[eventName].push(handler);
     },
@@ -809,6 +817,7 @@
     _emit: function(eventName) {
       this._validateEvent(eventName);
       var args = Array.prototype.slice.call(arguments, 1);
+      console.log('emitting to handlers', eventName, args, this._handler, this);
       this._handlers[eventName].forEach(function(handler) {
         handler.apply(this, args);
       });
@@ -1388,8 +1397,8 @@
   // cache loaded from localStorage
   var cachedInfo = {};
 
-  function parseLinks(links, cb) {
-    var link, authUrl, storageType;
+  function parseLinks(links, userAddress, cb) {
+    var link, authURL, storageType;
     
     links.forEach(function(l) {
       if (l.rel === 'remotestorage') {
@@ -1408,6 +1417,7 @@
       if (hasLocalStorage) {
         localStorage[SETTINGS_KEY] = JSON.stringify({ cache: cachedInfo });
       }
+      RemoteStorage.log('extracted', cachedInfo);
       cb(link.href, storageType, authURL);
     } else {
       RemoteStorage.log('could not find rel="remotestorage" link among profile links:', links);
@@ -1415,10 +1425,10 @@
     }
   }
 
-  function webfingerOnload(xhr, cb) {
+  function webfingerOnload(xhr, userAddress, cb) {
     var profile;
     if (xhr.status !== 200) {
-      RemoteStorage.log('webfinger responded with a '+xhr.status);
+      RemoteStorage.log('webfinger responded with a '+xhr.status, xhr);
       cb();
       return;
     }
@@ -1426,7 +1436,7 @@
     try {
       profile = JSON.parse(xhr.responseText);
     } catch(e) {
-      RemoteStorage.log('Failed to parse webfinger profile ' + xhr.responseText);
+      RemoteStorage.log('Failed to parse webfinger profile ' + xhr.responseText, xhr);
       cb();
       return;
     }
@@ -1437,7 +1447,8 @@
       return;
     }
 
-    parseLinks(links, cb);
+    RemoteStorage.log('calling parseLinks', profile.links);
+    parseLinks(profile.links, userAddress, cb);
   }
 
   /**
@@ -1472,7 +1483,9 @@
       console.error("webfinger error", arguments, '(', url, ')');
       tryOne();
     };
-    xhr.onload = webfingerOnload;
+    xhr.onload = function() {
+      webfingerOnload(xhr, userAddress, callback);
+    };
     xhr.send();
   };
 
@@ -1929,6 +1942,10 @@ RemoteStorage.Assets = {
 
   function stateSetter(widget, state) {
     return function() {
+      console.log('setting state', state, arguments);
+      if(state === 'initial') {
+        throw new Error('why?');
+      }
       if (hasLocalStorage) {
         localStorage[LS_STATE_KEY] = state;
       }
@@ -1954,6 +1971,7 @@ RemoteStorage.Assets = {
       } else if (error instanceof RemoteStorage.Unauthorized){
         widget.view.setState('unauthorized');
       } else {
+        console.log('other error');
         widget.view.setState('error', [error]);
       }
     };
