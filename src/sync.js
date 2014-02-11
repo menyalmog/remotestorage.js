@@ -230,7 +230,7 @@
           objs[path].push.timestamp =  this.now();
           return this.local.setNodes(objs).then(function() {
             var options;
-            if (objs[path].common.revision) {
+            if (objs[path].common && objs[path].common.revision) {
               options = {
                 ifMatch: objs[path].common.revision
               };
@@ -250,36 +250,37 @@
           //push delete:
           objs[path].push = { body: false, timestamp: this.now() };
           return this.local.setNodes(objs).then(function() {
-            var options;
-            if (objs[path].common.revision) {
-              options = {
-                ifMatch: objs[path].common.revision
+            if (objs[path].common && objs[path].common.revision) {
+              return {
+                action: 'delete',
+                path: path,
+                promise: this.remote.delete(path, {
+                  ifMatch: objs[path].common.revision
+                })
+              };
+            } else { //ascertain current common or remote revision first
+              return {
+                action: 'get',
+                path: path,
+                promise: this.remote.get(path)
               };
             }
-            return {
-              action: 'delete',
-              path: path,
-              promise: this.remote.delete(path, options)
-            };
           }.bind(this));
+        } else if (objs[path].common && objs[path].common.revision) {
+          //conditional refresh:
+          return {
+            action: 'get',
+            path: path,
+            promise: this.remote.get(path, {
+              ifNoneMatch: objs[path].common.revision
+            })
+          };
         } else {
-          //refresh:
-          var options = undefined;
-          if (objs[path].common.revision) {
-            return {
-              action: 'get',
-              path: path,
-              promise: this.remote.get(path, {
-                ifMatch: objs[path].common.revision
-              })
-            };
-          } else {
-            return {
-              action: 'get',
-              path: path,
-              promise: this.remote.get(path)
-            };
-          }
+          return {
+            action: 'get',
+            path: path,
+            promise: this.remote.get(path)
+          };
         }
       }.bind(this));
     },
