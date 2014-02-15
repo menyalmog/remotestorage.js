@@ -19,6 +19,7 @@
     },
 
     setNodes: function(objs) {
+    console.log('inmem setNodes');
       var i, promise = promising();
       for(i in objs) {
         if(objs[i] === undefined) {

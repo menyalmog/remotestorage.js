@@ -57,6 +57,8 @@
   RS.IndexedDB.prototype = {
 
     getNodes: function(paths) {
+    
+    console.log('getNodes', paths);
       var promise = promising();
       var transaction = this.db.transaction(['nodes'], 'readonly');
       var nodes = transaction.objectStore('nodes');
@@ -78,6 +80,8 @@
     },
 
     setNodes: function(objs) {
+    console.log('indexeddb setNodes');
+    console.log('setNodes', objs, 81);
       var promise = promising();
       var transaction = this.db.transaction(['nodes'], 'readwrite');
       var nodes = transaction.objectStore('nodes');
@@ -88,10 +92,16 @@
       }
       
       transaction.oncomplete = function() {
+        console.log('transaction complete!');
         promise.fulfill();
       };
 
-      transaction.onerror = transaction.onabort = promise.reject;
+      transaction.onerror = function() {
+        promise.reject('transaction error');
+      }
+      transaction.onabort = function() {
+        promise.reject('transaction abort');
+      }
       return promise;
     },
 

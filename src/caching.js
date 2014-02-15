@@ -26,6 +26,7 @@
     SEEN: false,
     SEEN_AND_FOLDERS: { data: false },
     ALL: { data: true },
+    pendingActivations: [],
     
     /**
      ** configuration methods
@@ -39,14 +40,24 @@
         throw new Error("value should be something like remoteStorage.caching.FOLDERS_AND_SEEN");
       }
       this._rootPaths[path] = value;
-      if ((value === this.SEEN_AND_FOLDERS || value === this.ALL)
-          && (this.activateHandler)) {
-        this.activateHandler(path);
+      console.log('call activate handler?', (value === this.SEEN_AND_FOLDERS), (value === this.ALL), (this.activateHandler));
+      if (value === this.SEEN_AND_FOLDERS || value === this.ALL) {
+        if (this.activateHandler) {
+          this.activateHandler(path);
+        } else {
+          this.pendingActivations.push(path);
+        }
       } 
     },
 
     onActivate: function(cb) {
+      var i;
+      console.log('setting activate handler', cb, this.pendingActivations);
       this.activateHandler = cb;
+      for(i=0; i<this.pendingActivations.length; i++) {
+        cb(this.pendingActivations[i]);
+      }
+      delete this.pendingActivations;
     },
     
     /**
