@@ -820,7 +820,9 @@
     }  
     this.sync.on('done', function() {
       console.log('done caught! setting timer', this.getSyncInterval());
-      this._syncTimer = setTimeout(this.sync.sync.bind(this.sync), this.getSyncInterval());
+      if (!this.sync.stopped) {
+        this._syncTimer = setTimeout(this.sync.sync.bind(this.sync), this.getSyncInterval());
+      }
     }.bind(this));
     console.log('syncCycle calling sync.sync:');
     this.sync.sync();
