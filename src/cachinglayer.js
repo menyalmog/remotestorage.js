@@ -53,7 +53,6 @@
         }
       }
     },
-
     _nodesFromRoot = function(path) {
       var parts, ret = [path];
       if(path.substr(-1) === '/') {
@@ -273,6 +272,24 @@
     },
     onDiff: function(setOnDiff) {
       this.diffHandler = setOnDiff;
+    },
+    migrate: function(node) {
+      if (typeof(node) === 'object' && !node.common) {
+        node.common = {};
+        if (typeof(node.path) === 'string') {
+          if (node.path.substr(-1) === '/' && typeof(node.body) === 'object') {
+            node.common.itemsMap = node.body;
+          }
+        } else {
+          //save legacy content of document node as local version
+          if (!node.local) {
+            node.local = {};
+          }
+          node.local.body = node.body;
+          node.local.contentType = node.contentType;
+        }
+      }
+      return node;
     },
     _getInternals: function() {
       return {

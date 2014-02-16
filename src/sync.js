@@ -189,11 +189,14 @@
           } catch(e) {
             //node.path is already '/', can't take parentPath
           }
+          console.log('checking read access for', parentPath, this.access.checkPath(parentPath, 'r'));
+          console.log('checking read access for', node.path, this.access.checkPath(node.path, 'r'));
           if (parentPath && this.access.checkPath(parentPath, 'r')) {
             this._tasks[parentPath] = [];
           } else if (this.access.checkPath(node.path, 'r')) {
             this._tasks[node.path] = [];
           }
+          console.log('enqueued', this._tasks);
         }
       }.bind(this)).then(function() {
         var i, j;
@@ -485,7 +488,7 @@
                       console.log('line 471');
 
         var i, missingChildren = {};
-        if(!objs[path]) {
+        if(typeof(objs[path]) !== 'object'  || objs[path].path !== path || typeof(objs[path].common) !== 'object') {
           objs[path] = {
             path: path,
             common: {}
@@ -583,7 +586,8 @@
         successful: (series === 2 || statusCode === 304 || statusCode === 412 || statusCode === 404),
         conflict: (statusCode === 412),
         unAuth: (statusCode === 401 || statusCode === 402 ||statusCode === 403),
-        notFound: (statusCode === 404)
+        notFound: (statusCode === 404),
+        changed: (statusCode !== 304)
       }
     },
     handleResponse: function(path, action, status, bodyOrItemsMap, contentType, revision) {
@@ -600,25 +604,28 @@
             }
           }
                           console.log('line 580');
-
-          return this.completeFetch(path, bodyOrItemsMap, contentType, revision).then(function(dataFromFetch) {
-                console.log('line 583');
-            if (path.substr(-1) === '/') {
-              if (this.corruptServerItemsMap(bodyOrItemsMap)) {
-                console.log('WARNING: discarding corrupt folder description from server for ' + path);
-                return false;
+          if(statusMeaning.changed) {
+            return this.completeFetch(path, bodyOrItemsMap, contentType, revision).then(function(dataFromFetch) {
+                  console.log('line 583');
+              if (path.substr(-1) === '/') {
+                if (this.corruptServerItemsMap(bodyOrItemsMap)) {
+                  console.log('WARNING: discarding corrupt folder description from server for ' + path);
+                  return false;
+                } else {
+                  return this.markChildren(path, bodyOrItemsMap, dataFromFetch.toBeSaved, dataFromFetch.missingChildren).then(function() {
+                  console.log('task completed!');
+                    return true;//task completed
+                  });
+                }
               } else {
-                return this.markChildren(path, bodyOrItemsMap, dataFromFetch.toBeSaved, dataFromFetch.missingChildren).then(function() {
-                console.log('task completed!');
+                return this.local.setNodes(objs).then(function() {
                   return true;//task completed
                 });
               }
-            } else {
-              return this.local.setNodes(objs).then(function() {
-                return true;//task completed
-              });
-            }
-          }.bind(this));
+            }.bind(this));
+          } else {
+            return promising().fulfill(true);//task completed
+          }
         } else if (action === 'put') {
           return this.completePush(path, action, statusMeaning.conflict, revision).then(function() {
             return true;//task completed

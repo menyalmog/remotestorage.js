@@ -125,12 +125,12 @@
       cursorReq.onsuccess = function(evt) {
         var cursor = evt.target.result;
         if (cursor) {
-          cb(cursor.value);
+          cb(this.migrate(cursor.value));
           cursor.continue();
         } else {
           promise.fulfill();
         }
-      };
+      }.bind(this);
       return promise;
     },
 

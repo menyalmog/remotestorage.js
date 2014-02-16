@@ -74,7 +74,7 @@
       for(i=0; i<localStorage.length; i++) {
         if(localStorage.key(i).substring(0, NODES_PREFIX.length) === NODES_PREFIX) {
           try {
-            node = JSON.parse(localStorage[localStorage.key(i)]);
+            node = this.migrate(JSON.parse(localStorage[localStorage.key(i)]));
           } catch(e) {
             node = undefined;
           }

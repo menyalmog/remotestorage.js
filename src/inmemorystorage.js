@@ -35,7 +35,7 @@
     forAllNodes: function(cb) {
       var i;
       for(i in this._storage) {
-        cb(this._storage[i]);
+        cb(this.migrate(this._storage[i]));
       }
       return promising().fulfill();
     }
