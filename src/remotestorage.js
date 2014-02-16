@@ -654,6 +654,14 @@
    * Usually either a <RemoteStorage.IndexedDB> or <RemoteStorage.LocalStorage>
    * instance.
    */
+    
+  /**
+   ** reset
+   **/
+  RemoteStorage.prototype.reset = function() {
+    indexedDB.deleteDatabase('remotestorage');
+    localStorage.clear();
+  };
 
   global.RemoteStorage = RemoteStorage;
 
