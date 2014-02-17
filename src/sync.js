@@ -377,11 +377,14 @@
       }
                 console.log('line 361');
       return this.local.getNodes(paths).then(function(objs) {
-                console.log('line 363');
+                console.log('line 363', objs, meta);
         var j, k, cachingStrategy, create;
         for (j in objs) {
-          if (itemsMap[j]) {
+          console.log('consider', j);
+          if (meta[j]) {
+            console.log('exists in itemsMap');
             if (objs[j] && objs[j].common) {
+              console.log('has common in obj');
               if (objs[j].common.revision !== meta[j].ETag) {
                 if (!objs[j].remote || objs[j].remote.revision !== meta[j].ETag) {
                   changedObjs[j] = this.local._getInternals()._deepClone(objs[j]);
@@ -399,6 +402,7 @@
               } else {
                 create = (cachingStrategy === this.caching.ALL);
               }
+              console.log('cachingStrategy', cachingStrategy, create);
               if (create) {
                 changedObjs[j] = {
                   path: j,
@@ -603,7 +607,7 @@
               bodyOrItemsmap = false;
             }
           }
-                          console.log('line 580');
+                          console.log('line 580', statusMeaning);
           if(statusMeaning.changed) {
             return this.completeFetch(path, bodyOrItemsMap, contentType, revision).then(function(dataFromFetch) {
                   console.log('line 583');
@@ -612,6 +616,7 @@
                   console.log('WARNING: discarding corrupt folder description from server for ' + path);
                   return false;
                 } else {
+                console.log('dir and not corrupt, calling markChildren');
                   return this.markChildren(path, bodyOrItemsMap, dataFromFetch.toBeSaved, dataFromFetch.missingChildren).then(function() {
                   console.log('task completed!');
                     return true;//task completed
