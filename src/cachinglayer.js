@@ -186,6 +186,12 @@
               if (!objs[pathNodes[i]].local) {
                 objs[pathNodes[i]].local = _deepClone(objs[pathNodes[i]].common);
               }
+              if (!objs[pathNodes[i]].common.itemsMap) {
+                objs[pathNodes[i]].common.itemsMap = {};
+              }
+              if (!objs[pathNodes[i]].local.itemsMap) {
+                objs[pathNodes[i]].local.itemsMap = objs[pathNodes[i]].common.itemsMap;
+              }
               console.log('objs now', objs, i, pathNodes[i]);
               console.log('it is', objs[pathNodes[i]]);
               console.log('and',   objs[pathNodes[i]].local);
