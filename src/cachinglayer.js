@@ -157,30 +157,49 @@
     put: function(path, body, contentType) {
       var i, now = new Date().getTime(), pathNodes = _nodesFromRoot(path), previous;
       return this._updateNodes(pathNodes, function(objs) {
-        for (i=0; i<pathNodes.length; i++) {
-          if (!objs[pathNodes[i]]) {
-            objs[pathNodes[i]] = _makeNode(pathNodes[i], now);
-          }
-          if (i === 0) {
-            //save the document itself
-            previous = _getLatest(objs[pathNodes[i]]);
-            objs[pathNodes[i]].local = {
-              previousBody: (previous ? previous.body : undefined),
-              previousContentType: (previous ? previous.contentType : undefined),
-              body: body,
-              contentType: contentType,
-              timestamp: now
-            };
-          } else {
-            //add it to all parents
-            itemName = pathNodes[i-1].substring(pathNodes[i].length);
-            if (!objs[pathNodes[i]].local) {
-              objs[pathNodes[i]].local = _deepClone(objs[pathNodes[i]].common);
+        try {
+          for (i=0; i<pathNodes.length; i++) {
+            if (!objs[pathNodes[i]]) {
+              objs[pathNodes[i]] = _makeNode(pathNodes[i], now);
             }
-            objs[pathNodes[i]].local.itemsMap[itemName] = true;
+            if (i === 0) {
+              //save the document itself
+              console.log('document itself', pathNodes, i, pathNodes[i]);
+              previous = _getLatest(objs[pathNodes[i]]);
+              objs[pathNodes[i]].local = {
+                previousBody: (previous ? previous.body : undefined),
+                previousContentType: (previous ? previous.contentType : undefined),
+                body: body,
+                contentType: contentType,
+                timestamp: now
+              };
+            } else {
+              //add it to all parents
+              console.log('parent', pathNodes, i, pathNodes[i]);
+              itemName = pathNodes[i-1].substring(pathNodes[i].length);
+              if (!objs[pathNodes[i]].common) {
+                objs[pathNodes[i]].common = {
+                  timestamp: now,
+                  itemsMap: {}
+                };
+              }
+              if (!objs[pathNodes[i]].local) {
+                objs[pathNodes[i]].local = _deepClone(objs[pathNodes[i]].common);
+              }
+              console.log('objs now', objs, i, pathNodes[i]);
+              console.log('it is', objs[pathNodes[i]]);
+              console.log('and',   objs[pathNodes[i]].local);
+              objs[pathNodes[i]].local.itemsMap[itemName] = true;
+            }
           }
+          return objs;
+        } catch(e) {
+          console.log('error while putting', objs, i, e);
+              console.log('i objs now', objs, i, pathNodes[i]);
+              console.log('i it is', objs[pathNodes[i]]);
+              console.log('i and',   objs[pathNodes[i]].local);
+          throw e;
         }
-        return objs;
       });
     },
     delete: function(path) {
