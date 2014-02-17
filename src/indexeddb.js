@@ -98,9 +98,9 @@
         } else {
           console.log('removing', i);
           try {
-            nodes.remove(i);
+            nodes.delete(i);
           } catch(e) {
-            console.log('error while removing', objs[i], e);
+            console.log('error while removing', nodes, objs[i], e);
             throw e;
           }
         }
