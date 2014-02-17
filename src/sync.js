@@ -346,8 +346,10 @@
         console.log('line 333');
         return obj;
       } else {
+      console.log('line 349');
         if (obj.remote.body !== undefined) {
           //keep/revert:
+          console.log('emitting keep/revert');
           this.local._emit('change', {
             origin: 'conflict',
             path: obj.path,
@@ -360,6 +362,7 @@
           delete obj.remote;
           delete obj.local;
         }
+        console.log('365');
         delete obj.push;
         return obj;
       }
@@ -546,6 +549,7 @@
     completePush: function(path, action, conflict, revision) {
       return this.local.getNodes([path]).then(function(objs) {
         if (conflict) {
+          console.log('we have conflict');
           if (!objs[path].remote || objs[path].remote.revision !== revision) {
             objs[path].remote = {
               revision: revision,
@@ -554,6 +558,7 @@
           }
           objs[path] = this.autoMerge(objs[path]);
         } else {
+          console.log('no conflict');
           objs[path].common = {
             revision: revision,
             timestamp: this.now()
@@ -573,6 +578,7 @@
             }
           }
         }
+        console.log('setting nodes');
         return this.local.setNodes(objs);
       }.bind(this));
     },
