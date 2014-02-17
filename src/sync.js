@@ -618,7 +618,7 @@
                   });
                 }
               } else {
-                return this.local.setNodes(objs).then(function() {
+                return this.local.setNodes(dataFromFetch.toBeSaved).then(function() {
                   return true;//task completed
                 });
               }

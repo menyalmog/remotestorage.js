@@ -87,8 +87,23 @@
       var nodes = transaction.objectStore('nodes');
       var i, nodeReq;
       for (i in objs) {
-        console.log('putting', objs[i]);
-        nodes.put(objs[i]);
+        if(typeof(objs[i]) === 'object') {
+          console.log('putting', objs[i]);
+          try {
+            nodes.put(objs[i]);
+          } catch(e) {
+            console.log('error while putting', objs[i], e);
+            throw e;
+          }
+        } else {
+          console.log('removing', i);
+          try {
+            nodes.remove(i);
+          } catch(e) {
+            console.log('error while removing', objs[i], e);
+            throw e;
+          }
+        }
       }
       
       transaction.oncomplete = function() {

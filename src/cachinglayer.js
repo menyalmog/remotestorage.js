@@ -17,7 +17,11 @@
     },
     
     _deepClone = function(obj) {
-      return JSON.parse(JSON.stringify(obj));
+      if (obj === undefined) {
+        return undefined;
+      } else {
+        return JSON.parse(JSON.stringify(obj));
+      }
     },
     
     _equal = function(obj1, obj2) {
