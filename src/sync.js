@@ -854,8 +854,13 @@
       console.log('will instantiate sync stopped');
       this.syncStopped = true;
     }
- };
-
+  };
+  RemoteStorage.prototype.startSync = function() {
+    this.sync.stopped = false;
+    this.syncStopped = false;
+    this.sync.sync();
+  };
+    
   var syncCycleCb;
   RemoteStorage.Sync._rs_init = function(remoteStorage) {
     syncCycleCb = function() {
