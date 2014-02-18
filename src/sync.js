@@ -418,6 +418,7 @@
             changedObjs[j] = undefined;
           }
         }
+        console.log('line 421', this);
         return this.deleteRemoteTrees(Object.keys(recurse), changedObjs).then(function(changedObjs2) {
           return this.local.setNodes(changedObjs2);
         }.bind(this));
@@ -444,12 +445,13 @@
               }
             } else {
               if (objs[i].common && typeof(objs[i].common.body) !== undefined) {
-                changedObjs[j] = this.local._getInternals()._deepClone(objs[j]);
-                changedObjs[j].remote = {
+                console.log('cloning', changedObjs, i, objs, j);
+                changedObjs[i] = this.local._getInternals()._deepClone(objs[i]);
+                changedObjs[i].remote = {
                   body: false,
                   timestamp: this.now()
                 };
-                changedObjs[j] = this.autoMerge(changedObjs[j]);
+                changedObjs[i] = this.autoMerge(changedObjs[i]);
               }
             }
           }
@@ -457,8 +459,8 @@
         //recurse whole tree depth levels at once:
         return this.deleteRemoteTrees(Object.keys(subPaths), changedObjs).then(function(changedObjs2) {
           return this.local.setNodes(changedObjs2);
-        });
-      });
+        }.bind(this));
+      }.bind(this));
     },
     completeFetch: function(path, bodyOrItemsMap, contentType, revision) {
 
@@ -639,7 +641,7 @@
           }
           this._emit('req-done');
           if (Object.getOwnPropertyNames(this._tasks).length === 0 || this.stopped) {
-            console.log('sync is done! reschedule?');
+            console.log('sync is done! reschedule?', Object.getOwnPropertyNames(this._tasks).length, this.stopped);
             this._emit('done');
           } else {
             //use a zero timeout to let the JavaScript runtime catch its breath

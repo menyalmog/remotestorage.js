@@ -87,7 +87,7 @@
   var methods = {
     //GPD interface:
     get: function(path, maxAge) {
-      console.log('get', path, maxAge);
+//      console.log('get', path, maxAge);
       var promise = promising();
       this.getNodes([path]).then(function(objs) {
         var latest = _getLatest(objs[path]);

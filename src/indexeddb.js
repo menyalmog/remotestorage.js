@@ -102,7 +102,7 @@
       }
       
       transaction.oncomplete = function() {
-        console.log('transaction complete!');
+//        console.log('transaction complete!');
         promise.fulfill();
       };
 
