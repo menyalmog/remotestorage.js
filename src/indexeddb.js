@@ -58,7 +58,6 @@
 
     getNodes: function(paths) {
     
-    console.log('getNodes', paths);
       var promise = promising();
       var transaction = this.db.transaction(['nodes'], 'readonly');
       var nodes = transaction.objectStore('nodes');
@@ -80,15 +79,12 @@
     },
 
     setNodes: function(objs) {
-    console.log('indexeddb setNodes');
-    console.log('setNodes', objs, 81);
       var promise = promising();
       var transaction = this.db.transaction(['nodes'], 'readwrite');
       var nodes = transaction.objectStore('nodes');
       var i, nodeReq;
       for (i in objs) {
         if(typeof(objs[i]) === 'object') {
-          console.log('putting', objs[i]);
           try {
             nodes.put(objs[i]);
           } catch(e) {
@@ -96,7 +92,6 @@
             throw e;
           }
         } else {
-          console.log('removing', i);
           try {
             nodes.delete(i);
           } catch(e) {

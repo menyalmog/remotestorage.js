@@ -19,7 +19,6 @@
     this._timeStarted = {};
     RemoteStorage.eventHandling(this, 'done', 'req-done');
     this.caching.onActivate(function(path) {
-      console.log('caching.onActivate', path);
       this.addTask(path);
       this.doTasks();
     }.bind(this));
@@ -189,14 +188,11 @@
           } catch(e) {
             //node.path is already '/', can't take parentPath
           }
-          console.log('checking read access for', parentPath, this.access.checkPath(parentPath, 'r'));
-          console.log('checking read access for', node.path, this.access.checkPath(node.path, 'r'));
           if (parentPath && this.access.checkPath(parentPath, 'r')) {
             this._tasks[parentPath] = [];
           } else if (this.access.checkPath(node.path, 'r')) {
             this._tasks[node.path] = [];
           }
-          console.log('enqueued', this._tasks);
         }
       }.bind(this)).then(function() {
         var i, j;
@@ -293,25 +289,17 @@
       if (!obj.remote) {
         return obj;
       }
-      console.log('line 293');
       if (!obj.local) {
-      console.log('line 295');
         if (obj.remote) {
-      console.log('line 297');
           if (obj.path.substr(-1) === '/') {
-                console.log('line 299', obj);
             newValue = (typeof(obj.remote.itemsMap) === 'object' && Object.keys(obj.remote.itemsMap).length ? obj.remote.itemsMap : undefined);
             oldValue = (typeof(obj.common.itemsMap) === 'object' && Object.keys(obj.common.itemsMap).length ? obj.common.itemsMap : undefined);
-                console.log('line 302');
           } else {
-                console.log('line 304');
             newValue = (obj.remote.body === false ? undefined : obj.remote.body);
             oldValue = (obj.common.body === false ? undefined : obj.common.body);
           }
-                console.log('line 306');
 
           if (newValue) {
-      console.log('line 309');
             this.local._emit('change', {
               origin: 'remote',
               path: obj.path,
@@ -322,10 +310,8 @@
             delete obj.remote;
           }
         }
-        console.log('line 3.14');
         return obj;
       }
-      console.log('line 317');
       if (obj.path.substr(-1) === '/') {
         //auto merge folder once remote was fetched:
         if (obj.remote.itemsMap) {
@@ -343,10 +329,8 @@
             }
           }
         }
-        console.log('line 333');
         return obj;
       } else {
-      console.log('line 349');
         if (obj.remote.body !== undefined) {
           //keep/revert:
           console.log('emitting keep/revert');
@@ -362,13 +346,11 @@
           delete obj.remote;
           delete obj.local;
         }
-        console.log('365');
         delete obj.push;
         return obj;
       }
     },
     markChildren: function(path, itemsMap, changedObjs, missingChildren) {
-                 console.log('line 353');
 
       var i, paths = [], meta = {}, recurse = {};
       for (i in itemsMap) {
@@ -378,16 +360,11 @@
       for (i in missingChildren) {
         paths.push(path+i);
       }
-                console.log('line 361');
       return this.local.getNodes(paths).then(function(objs) {
-                console.log('line 363', objs, meta);
         var j, k, cachingStrategy, create;
         for (j in objs) {
-          console.log('consider', j);
           if (meta[j]) {
-            console.log('exists in itemsMap');
             if (objs[j] && objs[j].common) {
-              console.log('has common in obj');
               if (objs[j].common.revision !== meta[j].ETag) {
                 if (!objs[j].remote || objs[j].remote.revision !== meta[j].ETag) {
                   changedObjs[j] = this.local._getInternals()._deepClone(objs[j]);
@@ -405,7 +382,6 @@
               } else {
                 create = (cachingStrategy === this.caching.ALL);
               }
-              console.log('cachingStrategy', cachingStrategy, create);
               if (create) {
                 changedObjs[j] = {
                   path: j,
@@ -426,7 +402,6 @@
               changedObjs[j].remote.contentLength = meta[j]['Content-Length'];
             }
           } else if (missingChildren[i] && objs[j] && objs[j].common) {
-            console.log('real 419', missingChildren, i, objs, j);
             if (objs[j].common.itemsMap) {
               for (k in objs[j].common.itemsMap) {
                 recurse[j+k] = true;
@@ -443,10 +418,7 @@
             changedObjs[j] = undefined;
           }
         }
-        console.log('line 419');
         return this.deleteRemoteTrees(Object.keys(recurse), changedObjs).then(function(changedObjs2) {
-          console.log('line 420', changedObjs2);
-          console.log(this.local);
           return this.local.setNodes(changedObjs2);
         }.bind(this));
       }.bind(this));
@@ -489,10 +461,8 @@
       });
     },
     completeFetch: function(path, bodyOrItemsMap, contentType, revision) {
-                    console.log('line 468');
 
       return this.local.getNodes([path]).then(function(objs) {
-                      console.log('line 471');
 
         var i, missingChildren = {};
         if(typeof(objs[path]) !== 'object'  || objs[path].path !== path || typeof(objs[path].common) !== 'object') {
@@ -535,10 +505,8 @@
           objs[path].remote.body = bodyOrItemsMap;
           objs[path].remote.contentType = contentType;
         }
-                        console.log('line 514');
 
         objs[path] = this.autoMerge(objs[path]);
-                        console.log('line 517', objs, missingChildren);
 
         return {
           toBeSaved: objs,
@@ -558,7 +526,6 @@
           }
           objs[path] = this.autoMerge(objs[path]);
         } else {
-          console.log('no conflict');
           objs[path].common = {
             revision: revision,
             timestamp: this.now()
@@ -578,7 +545,6 @@
             }
           }
         }
-        console.log('setting nodes');
         return this.local.setNodes(objs);
       }.bind(this));
     },
@@ -601,7 +567,6 @@
       }
     },
     handleResponse: function(path, action, status, bodyOrItemsMap, contentType, revision) {
-      console.log('handleResponse', path, action, status, bodyOrItemsMap, contentType, revision);
       var statusMeaning = this.interpretStatus(status);
       
       if (statusMeaning.successful) {
@@ -613,18 +578,14 @@
               bodyOrItemsmap = false;
             }
           }
-                          console.log('line 580', statusMeaning);
           if(statusMeaning.changed) {
             return this.completeFetch(path, bodyOrItemsMap, contentType, revision).then(function(dataFromFetch) {
-                  console.log('line 583');
               if (path.substr(-1) === '/') {
                 if (this.corruptServerItemsMap(bodyOrItemsMap)) {
                   console.log('WARNING: discarding corrupt folder description from server for ' + path);
                   return false;
                 } else {
-                console.log('dir and not corrupt, calling markChildren');
                   return this.markChildren(path, bodyOrItemsMap, dataFromFetch.toBeSaved, dataFromFetch.missingChildren).then(function() {
-                  console.log('task completed!');
                     return true;//task completed
                   });
                 }
@@ -659,15 +620,12 @@
     },
     numThreads: 1,
     finishTask: function (obj) {
-      console.log('finishTask', obj);
       if(obj.action === undefined) {
         delete this._running[obj.path];
       } else {
         obj.promise.then(function(status, bodyOrItemsMap, contentType, revision) {
-        console.log('line 634, calling handleResponse');
           return this.handleResponse(obj.path, obj.action, status, bodyOrItemsMap, contentType, revision);
         }.bind(this)).then(function(completed) {
-        console.log('line 636', completed);
           delete this._timeStarted[obj.path];
           delete this._running[obj.path];
           if (completed) {
@@ -680,7 +638,6 @@
           } else {
           }
           this._emit('req-done');
-          console.log('_running/_tasks', this._running, this._tasks);
           if (Object.getOwnPropertyNames(this._tasks).length === 0 || this.stopped) {
             console.log('sync is done! reschedule?');
             this._emit('done');
@@ -766,10 +723,8 @@
     sync: function() {
       var promise = promising();
       if (!this.doTasks()) {
-        console.log('doTasks returned false');
         return this.findTasks().then(function() {
           try {
-            console.log('doTasks after findTasks');
             this.doTasks();
           } catch(e) {
             console.log('doTasks error', e);

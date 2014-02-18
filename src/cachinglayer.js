@@ -117,7 +117,6 @@
        return this.getNodes(nodePaths).then(function(objs) {
         var copyObjs = _deepClone(objs);
         objs = cb(objs);
-        console.log('done with cb', objs);
         for (i in objs) {
           if (_equal(objs[i], copyObjs[i])) {
             delete objs[i];
@@ -135,14 +134,12 @@
           }
         }
         return this.setNodes(objs).then(function() {
-          console.log('setNodes done', objs);
           return 200;
         }).then(function(status) {
           var i;
           if (this.diffHandler) {
             for (i in objs) {
               if (i.substr(-1) !== '/') {
-                console.log('calling diffHandler', i);
                 this.diffHandler(i);
               }
             }
@@ -164,7 +161,6 @@
             }
             if (i === 0) {
               //save the document itself
-              console.log('document itself', pathNodes, i, pathNodes[i]);
               previous = _getLatest(objs[pathNodes[i]]);
               objs[pathNodes[i]].local = {
                 previousBody: (previous ? previous.body : undefined),
@@ -175,7 +171,6 @@
               };
             } else {
               //add it to all parents
-              console.log('parent', pathNodes, i, pathNodes[i]);
               itemName = pathNodes[i-1].substring(pathNodes[i].length);
               if (!objs[pathNodes[i]].common) {
                 objs[pathNodes[i]].common = {
@@ -192,18 +187,12 @@
               if (!objs[pathNodes[i]].local.itemsMap) {
                 objs[pathNodes[i]].local.itemsMap = objs[pathNodes[i]].common.itemsMap;
               }
-              console.log('objs now', objs, i, pathNodes[i]);
-              console.log('it is', objs[pathNodes[i]]);
-              console.log('and',   objs[pathNodes[i]].local);
               objs[pathNodes[i]].local.itemsMap[itemName] = true;
             }
           }
           return objs;
         } catch(e) {
           console.log('error while putting', objs, i, e);
-              console.log('i objs now', objs, i, pathNodes[i]);
-              console.log('i it is', objs[pathNodes[i]]);
-              console.log('i and',   objs[pathNodes[i]].local);
           throw e;
         }
       });
