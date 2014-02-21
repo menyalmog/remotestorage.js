@@ -769,6 +769,14 @@
    * Usually either a <RemoteStorage.IndexedDB> or <RemoteStorage.LocalStorage>
    * instance.
    */
+    
+  /**
+   ** reset
+   **/
+  RemoteStorage.prototype.reset = function() {
+    indexedDB.deleteDatabase('remotestorage');
+    localStorage.clear();
+  };
 
   global.RemoteStorage = RemoteStorage;
 
@@ -817,7 +825,7 @@
     _emit: function(eventName) {
       this._validateEvent(eventName);
       var args = Array.prototype.slice.call(arguments, 1);
-      console.log('emitting to handlers', eventName, args, this._handler, this);
+      //console.log('emitting to handlers', eventName, args, this._handler, this);
       this._handlers[eventName].forEach(function(handler) {
         handler.apply(this, args);
       });
@@ -1481,7 +1489,6 @@
     xhr.open('GET', url, true);
     xhr.onabort = xhr.onerror = function() {
       console.error("webfinger error", arguments, '(', url, ')');
-      tryOne();
     };
     xhr.onload = function() {
       webfingerOnload(xhr, userAddress, callback);
