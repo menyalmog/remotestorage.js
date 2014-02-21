@@ -428,6 +428,7 @@
       if (paths.length === 0) {
         return promising().fulfill(changedObjs);
       }
+      console.log('431');
       this.local.getNodes(paths).then(function(objs) {
         var i, j, subPaths = {};
         for (i in objs) {
@@ -456,8 +457,10 @@
             }
           }
         }
+              console.log('460');
         //recurse whole tree depth levels at once:
         return this.deleteRemoteTrees(Object.keys(subPaths), changedObjs).then(function(changedObjs2) {
+      console.log('463');
           return this.local.setNodes(changedObjs2);
         }.bind(this));
       }.bind(this));
@@ -620,7 +623,7 @@
         });
       }
     },
-    numThreads: 1,
+    numThreads: 10,
     finishTask: function (obj) {
       if(obj.action === undefined) {
         delete this._running[obj.path];
@@ -640,16 +643,18 @@
           } else {
           }
           this._emit('req-done');
-          if (Object.getOwnPropertyNames(this._tasks).length === 0 || this.stopped) {
-            console.log('sync is done! reschedule?', Object.getOwnPropertyNames(this._tasks).length, this.stopped);
-            this._emit('done');
-          } else {
-            //use a zero timeout to let the JavaScript runtime catch its breath
-            //(and hopefully force an IndexedDB auto-commit?):
-            setTimeout(function() {
-              this.doTasks();
-            }.bind(this), 0);
-          }
+          this.findTasks(false).then(function() {//see if there are any more tasks that are not refresh tasks
+            if (Object.getOwnPropertyNames(this._tasks).length === 0 || this.stopped) {
+              console.log('sync is done! reschedule?', Object.getOwnPropertyNames(this._tasks).length, this.stopped);
+              this._emit('done');
+            } else {
+              //use a zero timeout to let the JavaScript runtime catch its breath
+              //(and hopefully force an IndexedDB auto-commit?):
+              setTimeout(function() {
+                this.doTasks();
+              }.bind(this), 0);
+            }
+          }.bind(this));
         }.bind(this),
         function(err) {
           console.log('bug!', err);
@@ -697,9 +702,15 @@
       //}
       return (numAdded >= numToAdd);
     },
-    findTasks: function() {
+    findTasks: function(alsoCheckRefresh) {
+      if (Object.getOwnPropertyNames(this._tasks).length > 0 || this.stopped) {
+        //console.log('have tasks or stopped; findTasks skipped');
+        promise = promising();
+        promise.fulfill();
+        return promise;
+      }
       return this.checkDiffs().then(function(numDiffs) {
-        if (numDiffs) {
+        if (numDiffs || alsoCheckRefresh === false) {
           promise = promising();
           promise.fulfill();
           return promise;
