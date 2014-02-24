@@ -52,16 +52,19 @@
     }
     RS.cachingLayer(this);
     RS.eventHandling(this, 'change');
+    this.getsRunning = 0;
+    this.putsRunning = 0;
   };
 
   RS.IndexedDB.prototype = {
 
     getNodes: function(paths) {
-    
       var promise = promising();
       var transaction = this.db.transaction(['nodes'], 'readonly');
       var nodes = transaction.objectStore('nodes');
       var ret = {}, i, nodeReq;
+//      console.log('starting get');
+      this.getsRunning++;
       for (i=0; i<paths.length; i++) {
         (function(captureI) {
           nodes.get(paths[captureI]).onsuccess = function(evt) {
@@ -72,9 +75,15 @@
       
       transaction.oncomplete = function() {
         promise.fulfill(ret);
-      };
+        this.getsRunning--;
+//        console.log('get complete');
+      }.bind(this);
 
-      transaction.onerror = transaction.onabort = promise.reject;
+      transaction.onerror = transaction.onabort = function() {
+        promise.reject('get transaction error/abort');
+        this.getsRunning--;
+      }.bind(this);
+      
       return promise;
     },
 
@@ -83,6 +92,8 @@
       var transaction = this.db.transaction(['nodes'], 'readwrite');
       var nodes = transaction.objectStore('nodes');
       var i, nodeReq;
+//      console.log('starting put');
+      this.putsRunning++;
       for (i in objs) {
         if(typeof(objs[i]) === 'object') {
           try {
@@ -102,16 +113,19 @@
       }
       
       transaction.oncomplete = function() {
-//        console.log('transaction complete!');
         promise.fulfill();
-      };
+//        console.log('put complete!');
+        this.putsRunning--;
+      }.bind(this);
 
       transaction.onerror = function() {
         promise.reject('transaction error');
-      }
+        this.putsRunning--;
+      }.bind(this);
       transaction.onabort = function() {
         promise.reject('transaction abort');
-      }
+        this.putsRunning--;
+      }.bind(this);
       return promise;
     },
 

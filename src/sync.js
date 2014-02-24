@@ -648,11 +648,12 @@
               console.log('sync is done! reschedule?', Object.getOwnPropertyNames(this._tasks).length, this.stopped);
               this._emit('done');
             } else {
-              //use a zero timeout to let the JavaScript runtime catch its breath
-              //(and hopefully force an IndexedDB auto-commit?):
+              //use a 10ms timeout to let the JavaScript runtime catch its breath
+              //(and hopefully force an IndexedDB auto-commit?), and also to cause
+              //the threads to get staggered and get a good spread over time:
               setTimeout(function() {
                 this.doTasks();
-              }.bind(this), 0);
+              }.bind(this), 10);
             }
           }.bind(this));
         }.bind(this),
