@@ -113,8 +113,8 @@
           return;
         }
         if (this.isCorrupt(node, false)) {
-          console.log('WARNING: corrupt node in local cache', node);
-          //console.log((typeof(node) !== 'object'),
+          RemoteStorage.log('WARNING: corrupt node in local cache', node);
+          //RemoteStorage.log((typeof(node) !== 'object'),
           //  (Array.isArray(node)),
           //  (typeof(node.path) !== 'string'),
           //  (this.corruptRevision(node.common)),
@@ -340,7 +340,7 @@
       } else {
         if (obj.remote.body !== undefined) {
           //keep/revert:
-          console.log('emitting keep/revert');
+          RemoteStorage.log('emitting keep/revert');
           this.local._emit('change', {
             origin: 'conflict',
             path: obj.path,
@@ -425,7 +425,7 @@
             changedObjs[j] = undefined;
           }
         }
-        console.log('line 421', this);
+        RemoteStorage.log('line 421', this);
         return this.deleteRemoteTrees(Object.keys(recurse), changedObjs).then(function(changedObjs2) {
           return this.local.setNodes(this.flush(changedObjs2));
         }.bind(this));
@@ -435,7 +435,7 @@
       if (paths.length === 0) {
         return promising().fulfill(changedObjs);
       }
-      console.log('431');
+      RemoteStorage.log('431');
       this.local.getNodes(paths).then(function(objs) {
         var i, j, subPaths = {};
         for (i in objs) {
@@ -453,7 +453,7 @@
               }
             } else {
               if (objs[i].common && typeof(objs[i].common.body) !== undefined) {
-                console.log('cloning', changedObjs, i, objs, j);
+                RemoteStorage.log('cloning', changedObjs, i, objs, j);
                 changedObjs[i] = this.local._getInternals()._deepClone(objs[i]);
                 changedObjs[i].remote = {
                   body: false,
@@ -464,10 +464,10 @@
             }
           }
         }
-              console.log('460');
+              RemoteStorage.log('460');
         //recurse whole tree depth levels at once:
         return this.deleteRemoteTrees(Object.keys(subPaths), changedObjs).then(function(changedObjs2) {
-      console.log('463');
+      RemoteStorage.log('463');
           return this.local.setNodes(this.flush(changedObjs2));
         }.bind(this));
       }.bind(this));
@@ -527,7 +527,7 @@
     completePush: function(path, action, conflict, revision) {
       return this.local.getNodes([path]).then(function(objs) {
         if (conflict) {
-          console.log('we have conflict');
+          RemoteStorage.log('we have conflict');
           if (!objs[path].remote || objs[path].remote.revision !== revision) {
             objs[path].remote = {
               revision: revision,
@@ -592,7 +592,7 @@
             return this.completeFetch(path, bodyOrItemsMap, contentType, revision).then(function(dataFromFetch) {
               if (path.substr(-1) === '/') {
                 if (this.corruptServerItemsMap(bodyOrItemsMap)) {
-                  console.log('WARNING: discarding corrupt folder description from server for ' + path);
+                  RemoteStorage.log('WARNING: discarding corrupt folder description from server for ' + path);
                   return false;
                 } else {
                   return this.markChildren(path, bodyOrItemsMap, dataFromFetch.toBeSaved, dataFromFetch.missingChildren).then(function() {
@@ -650,7 +650,7 @@
           this._emit('req-done');
           this.findTasks(false).then(function() {//see if there are any more tasks that are not refresh tasks
             if (Object.getOwnPropertyNames(this._tasks).length === 0 || this.stopped) {
-              console.log('sync is done! reschedule?', Object.getOwnPropertyNames(this._tasks).length, this.stopped);
+              RemoteStorage.log('sync is done! reschedule?', Object.getOwnPropertyNames(this._tasks).length, this.stopped);
               this._emit('done');
             } else {
               //use a 10ms timeout to let the JavaScript runtime catch its breath
@@ -663,7 +663,7 @@
           }.bind(this));
         }.bind(this),
         function(err) {
-          console.log('bug!', err);
+          RemoteStorage.log('bug!', err);
           this.remote.online = false;
           delete this._timeStarted[obj.path];
           delete this._running[obj.path];
@@ -710,7 +710,7 @@
     },
     findTasks: function(alsoCheckRefresh) {
       if (Object.getOwnPropertyNames(this._tasks).length > 0 || this.stopped) {
-        //console.log('have tasks or stopped; findTasks skipped');
+        //RemoteStorage.log('have tasks or stopped; findTasks skipped');
         promise = promising();
         promise.fulfill();
         return promise;
@@ -746,14 +746,14 @@
           try {
             this.doTasks();
           } catch(e) {
-            console.log('doTasks error', e);
+            RemoteStorage.log('doTasks error', e);
           }
         }.bind(this), function(err) {
-          console.log('sync error', err);
+          RemoteStorage.log('sync error', err);
           throw new Error('local cache unavailable');
         });
       } else {
-        console.log('doTasks returned true');
+        RemoteStorage.log('doTasks returned true');
         return promising().fulfill();
       }
     }
@@ -811,21 +811,21 @@
       return;
     }  
     this.sync.on('done', function() {
-      console.log('done caught! setting timer', this.getSyncInterval());
+      RemoteStorage.log('done caught! setting timer', this.getSyncInterval());
       if (!this.sync.stopped) {
         this._syncTimer = setTimeout(this.sync.sync.bind(this.sync), this.getSyncInterval());
       }
     }.bind(this));
-    console.log('syncCycle calling sync.sync:');
+    RemoteStorage.log('syncCycle calling sync.sync:');
     this.sync.sync();
   };
 
   RemoteStorage.prototype.stopSync = function() {
     if (this.sync) {
-      console.log('stopping sync');
+      RemoteStorage.log('stopping sync');
       this.sync.stopped = true;
     } else {
-      console.log('will instantiate sync stopped');
+      RemoteStorage.log('will instantiate sync stopped');
       this.syncStopped = true;
     }
   };
@@ -838,19 +838,19 @@
   var syncCycleCb;
   RemoteStorage.Sync._rs_init = function(remoteStorage) {
     syncCycleCb = function() {
-      console.log('syncCycleCb calling syncCycle:');
+      RemoteStorage.log('syncCycleCb calling syncCycle:');
       if(!remoteStorage.sync) {
         //call this now that all other modules are also ready:
         remoteStorage.sync = new RemoteStorage.Sync(
             remoteStorage.local, remoteStorage.remote, remoteStorage.access,
             remoteStorage.caching);
         if (remoteStorage.syncStopped) {
-          console.log('instantiating sync stopped');
+          RemoteStorage.log('instantiating sync stopped');
           remoteStorage.sync.stopped = true;
           delete remoteStorage.syncStopped;
         }
       }  
-      console.log('syncCycleCb calling syncCycle:');
+      RemoteStorage.log('syncCycleCb calling syncCycle:');
       remoteStorage.syncCycle();
     };
     remoteStorage.on('ready', syncCycleCb);

@@ -87,11 +87,11 @@
   var methods = {
     //GPD interface:
     get: function(path, maxAge) {
-//      console.log('get', path, maxAge);
+//      RemoteStorage.log('get', path, maxAge);
       var promise = promising();
       this.getNodes([path]).then(function(objs) {
         var latest = _getLatest(objs[path]);
-//        console.log('maxAge', maxAge, (typeof(maxAge) === 'number'),
+//        RemoteStorage.log('maxAge', maxAge, (typeof(maxAge) === 'number'),
 //             !latest,
 //             !latest.timestamp,
 //             ((new Date().getTime()) - latest.timestamp > maxAge));
@@ -192,7 +192,7 @@
           }
           return objs;
         } catch(e) {
-          console.log('error while putting', objs, i, e);
+          RemoteStorage.log('error while putting', objs, i, e);
           throw e;
         }
       });

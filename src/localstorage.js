@@ -60,7 +60,7 @@
     },
 
     setNodes: function(objs) {
-    console.log('ls setNodes'); 
+    RemoteStorage.log('ls setNodes'); 
       var i, promise = promising();
       for(i in objs) {
         localStorage[NODES_PREFIX+i] = JSON.stringify(objs[i]);
@@ -105,7 +105,7 @@
       }
     }
     remove.forEach(function(key) {
-      console.log('removing', key);
+      RemoteStorage.log('removing', key);
       delete localStorage[key];
     });
   };

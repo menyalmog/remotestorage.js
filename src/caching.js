@@ -41,7 +41,7 @@
         throw new Error("value should be something like remoteStorage.caching.FOLDERS_AND_SEEN");
       }
       this._rootPaths[path] = value;
-      console.log('call activate handler?', (value === this.SEEN_AND_FOLDERS), (value === this.ALL), (this.activateHandler));
+      RemoteStorage.log('call activate handler?', (value === this.SEEN_AND_FOLDERS), (value === this.ALL), (this.activateHandler));
       if (value === this.SEEN_AND_FOLDERS || value === this.ALL) {
         if (this.activateHandler) {
           this.activateHandler(path);
@@ -60,7 +60,7 @@
 
     onActivate: function(cb) {
       var i;
-      console.log('setting activate handler', cb, this.pendingActivations);
+      RemoteStorage.log('setting activate handler', cb, this.pendingActivations);
       this.activateHandler = cb;
       for(i=0; i<this.pendingActivations.length; i++) {
         cb(this.pendingActivations[i]);

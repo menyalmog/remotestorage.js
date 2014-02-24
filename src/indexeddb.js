@@ -63,7 +63,7 @@
       var transaction = this.db.transaction(['nodes'], 'readonly');
       var nodes = transaction.objectStore('nodes');
       var ret = {}, i, nodeReq;
-//      console.log('starting get');
+//      RemoteStorage.log('starting get');
       this.getsRunning++;
       for (i=0; i<paths.length; i++) {
         (function(captureI) {
@@ -76,7 +76,7 @@
       transaction.oncomplete = function() {
         promise.fulfill(ret);
         this.getsRunning--;
-//        console.log('get complete');
+//        RemoteStorage.log('get complete');
       }.bind(this);
 
       transaction.onerror = transaction.onabort = function() {
@@ -92,21 +92,21 @@
       var transaction = this.db.transaction(['nodes'], 'readwrite');
       var nodes = transaction.objectStore('nodes');
       var i, nodeReq;
-//      console.log('starting put');
+//      RemoteStorage.log('starting put');
       this.putsRunning++;
       for (i in objs) {
         if(typeof(objs[i]) === 'object') {
           try {
             nodes.put(objs[i]);
           } catch(e) {
-            console.log('error while putting', objs[i], e);
+            RemoteStorage.log('error while putting', objs[i], e);
             throw e;
           }
         } else {
           try {
             nodes.delete(i);
           } catch(e) {
-            console.log('error while removing', nodes, objs[i], e);
+            RemoteStorage.log('error while removing', nodes, objs[i], e);
             throw e;
           }
         }
@@ -114,7 +114,7 @@
       
       transaction.oncomplete = function() {
         promise.fulfill();
-//        console.log('put complete!');
+//        RemoteStorage.log('put complete!');
         this.putsRunning--;
       }.bind(this);
 

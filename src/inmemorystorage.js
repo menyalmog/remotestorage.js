@@ -3,7 +3,7 @@
   RemoteStorage.InMemoryStorage = function(rs) {
     this.rs = rs;
     RemoteStorage.cachingLayer(this);
-    console.log('registering events');
+    RemoteStorage.log('registering events');
     RemoteStorage.eventHandling(this, 'change');
     this._storage = {};
   };
@@ -19,7 +19,7 @@
     },
 
     setNodes: function(objs) {
-    console.log('inmem setNodes');
+    RemoteStorage.log('inmem setNodes');
       var i, promise = promising();
       for(i in objs) {
         if(objs[i] === undefined) {

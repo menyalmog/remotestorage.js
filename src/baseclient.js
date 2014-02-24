@@ -1,7 +1,7 @@
 (function(global) {
 
   function deprecate(thing, replacement) {
-    console.log('WARNING: ' + thing + ' is deprecated. Use ' +
+    RemoteStorage.log('WARNING: ' + thing + ' is deprecated. Use ' +
                 replacement + ' instead.');
   }
 
@@ -154,7 +154,7 @@
      *   (start code)
      *   client.getListing('').then(function(listing) {
      *     listing.forEach(function(item) {
-     *       console.log(item);
+     *       RemoteStorage.log(item);
      *     });
      *   });
      *   (end code)
@@ -191,7 +191,7 @@
      *   (start code)
      *   client.getAll('').then(function(objects) {
      *     for (var key in objects) {
-     *       console.log('- ' + key + ': ', objects[key]);
+     *       RemoteStorage.log('- ' + key + ': ', objects[key]);
      *     }
      *   });
      *   (end code)

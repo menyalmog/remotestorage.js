@@ -236,7 +236,7 @@
           });
           self.online = true;
           if (isErrorStatus(response.status)) {
-            console.log('239 revision', response.status);
+            RemoteStorage.log('239 revision', response.status);
             if (getEtag) {
               revision = stripQuotes(response.getResponseHeader('ETag'));
             } else {
@@ -246,7 +246,7 @@
           } else if (isSuccessStatus(response.status) ||
                      (response.status === 200 && method !== 'GET')) {
             revision = stripQuotes(response.getResponseHeader('ETag'));
-            console.log('242 revision', revision);
+            RemoteStorage.log('242 revision', revision);
             promise.fulfill(response.status, undefined, undefined, revision);
           } else {
             var mimeType = response.getResponseHeader('Content-Type');
@@ -259,7 +259,7 @@
 
             if ((! mimeType) || mimeType.match(/charset=binary/)) {
               RS.WireClient.readBinaryData(response.response, mimeType, function(result) {
-              console.log('255 revision', revision);
+              RemoteStorage.log('255 revision', revision);
               promise.fulfill(response.status, result, mimeType, revision);
               });
             } else {
@@ -268,7 +268,7 @@
               } else {
                 body = response.responseText;
               }
-              console.log('264 revision', revision);
+              RemoteStorage.log('264 revision', revision);
               promise.fulfill(response.status, body, mimeType, revision);
             }
           }

@@ -15,7 +15,7 @@
       if (typeof(handler) !== 'function') {
         throw new Error('argument handler should be a function');
       }
-      console.log('adding event listener', eventName, handler);
+      RemoteStorage.log('adding event listener', eventName, handler);
       this._validateEvent(eventName);
       this._handlers[eventName].push(handler);
     },
@@ -39,7 +39,7 @@
     _emit: function(eventName) {
       this._validateEvent(eventName);
       var args = Array.prototype.slice.call(arguments, 1);
-      //console.log('emitting to handlers', eventName, args, this._handler, this);
+      //RemoteStorage.log('emitting to handlers', eventName, args, this._handler, this);
       this._handlers[eventName].forEach(function(handler) {
         handler.apply(this, args);
       });
@@ -87,8 +87,8 @@
    *   };
    *
    *   var myObject = new MyConstructor();
-   *   myObject.on('connected', function() { console.log('connected'); });
-   *   myObject.on('disconnected', function() { console.log('disconnected'); });
+   *   myObject.on('connected', function() { RemoteStorage.log('connected'); });
+   *   myObject.on('disconnected', function() { RemoteStorage.log('disconnected'); });
    *   // this would throw an exception as well:
    *   //myObject.on('something-else', function() {});
    *
