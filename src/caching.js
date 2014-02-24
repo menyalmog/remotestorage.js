@@ -23,7 +23,8 @@
   };
 
   RemoteStorage.Caching.prototype = {
-    SEEN: false,
+    FLUSH: false,
+    SEEN: 'seen',
     SEEN_AND_FOLDERS: { data: false },
     ALL: { data: true },
     pendingActivations: [],
@@ -48,6 +49,13 @@
           this.pendingActivations.push(path);
         }
       } 
+    },
+    
+    enable: function(path) {
+      this.set(path, this.ALL);
+    },
+    disable: function(path) {
+      this.set(path, this.FLUSH);
     },
 
     onActivate: function(cb) {
