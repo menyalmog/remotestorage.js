@@ -208,6 +208,13 @@
         throw err;
       });
     },
+    flush: function(objs) {
+      for (i in objs) {
+        if (this.caching.checkPath(i) === this.caching.FLUSH && !objs[i].local) {//strategy is FLUSH and no local changes exist
+          objs[i] = undefined;//cause node to be flushed from cache
+        }
+      }
+    },
     doTask: function(path) {
       return this.local.getNodes([path]).then(function(objs) {
         if(typeof(objs[path]) === 'undefined') {
@@ -228,7 +235,7 @@
           //push put:
           objs[path].push = this.local._getInternals()._deepClone(objs[path].local);
           objs[path].push.timestamp =  this.now();
-          return this.local.setNodes(objs).then(function() {
+          return this.local.setNodes(this.flush(objs)).then(function() {
             var options;
             if (objs[path].common && objs[path].common.revision) {
               options = {
@@ -249,7 +256,7 @@
         } else if (objs[path].local && objs[path].local.body === false) {
           //push delete:
           objs[path].push = { body: false, timestamp: this.now() };
-          return this.local.setNodes(objs).then(function() {
+          return this.local.setNodes(this.flush(objs)).then(function() {
             if (objs[path].common && objs[path].common.revision) {
               return {
                 action: 'delete',
@@ -420,7 +427,7 @@
         }
         console.log('line 421', this);
         return this.deleteRemoteTrees(Object.keys(recurse), changedObjs).then(function(changedObjs2) {
-          return this.local.setNodes(changedObjs2);
+          return this.local.setNodes(this.flush(changedObjs2));
         }.bind(this));
       }.bind(this));
     },
@@ -461,14 +468,12 @@
         //recurse whole tree depth levels at once:
         return this.deleteRemoteTrees(Object.keys(subPaths), changedObjs).then(function(changedObjs2) {
       console.log('463');
-          return this.local.setNodes(changedObjs2);
+          return this.local.setNodes(this.flush(changedObjs2));
         }.bind(this));
       }.bind(this));
     },
     completeFetch: function(path, bodyOrItemsMap, contentType, revision) {
-
       return this.local.getNodes([path]).then(function(objs) {
-
         var i, missingChildren = {};
         if(typeof(objs[path]) !== 'object'  || objs[path].path !== path || typeof(objs[path].common) !== 'object') {
           objs[path] = {
@@ -550,14 +555,14 @@
             }
           }
         }
-        return this.local.setNodes(objs);
+        return this.local.setNodes(this.flush(objs));
       }.bind(this));
     },
     dealWithFailure: function(path, action, statusMeaning) {
       return this.local.getNodes([path]).then(function(objs) {
         if (objs[path]) {
           delete objs[path].push;
-          return this.local.setNodes(objs);
+          return this.local.setNodes(this.flush(objs));
         }
       }.bind(this));
     },
@@ -595,7 +600,7 @@
                   });
                 }
               } else {
-                return this.local.setNodes(dataFromFetch.toBeSaved).then(function() {
+                return this.local.setNodes(this.flush(dataFromFetch.toBeSaved)).then(function() {
                   return true;//task completed
                 });
               }
