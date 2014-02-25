@@ -137,10 +137,12 @@
   }
 
   var SyncedGetPutDelete = {
-    get: function(path, maxAge) {
+    get: function(path) {
       var self = this;
-      if (this.local) {
-        return this.local.get(path, maxAge);
+      if (this.caching.cachePath(path)) {
+        return this.caching.waitForPath(path).then(function() {
+          return self.local.get(path);
+        });
       } else {
         return this.remote.get(path);
       }
@@ -150,7 +152,7 @@
       if (shareFirst.bind(this)(path)) {
         return SyncedGetPutDelete._wrapBusyDone.call(this, this.remote.put(path, body, contentType));
       }
-      else if (this.local) {
+      else if (this.caching.cachePath(path)) {
         return this.local.put(path, body, contentType);
       } else {
         return SyncedGetPutDelete._wrapBusyDone.call(this, this.remote.put(path, body, contentType));
@@ -158,7 +160,7 @@
     },
 
     'delete': function(path) {
-      if (this.local) {
+      if (this.caching.cachePath(path)) {
         return this.local.delete(path);
       } else {
         return SyncedGetPutDelete._wrapBusyDone.call(this, this.remote.delete(path));
@@ -207,6 +209,12 @@
      * deprecated use disconnected
      **/
     /**
+     * Event: conflict
+     *
+     * fired when a conflict occurs
+     * TODO: arguments, how does this work
+     **/
+    /**
      * Event: error
      *
      * fired when an error occurs
@@ -243,7 +251,7 @@
      **/
 
     RemoteStorage.eventHandling(
-      this, 'ready', 'disconnected', 'disconnect', 'error',
+      this, 'ready', 'disconnected', 'disconnect', 'conflict', 'error',
       'features-loaded', 'connecting', 'authing', 'wire-busy', 'wire-done'
     );
 
@@ -258,7 +266,7 @@
 
     this._cleanups = [];
 
-    this._pathHandlers = { change: {} };
+    this._pathHandlers = { change: {}, conflict: {} };
 
     this.apiKeys = {};
 
@@ -383,7 +391,6 @@
         i++;
         if (i >= n) {
           this._init();
-          console.log('done cleaning up, emitting disconnected and disconnect events');
           this._emit('disconnected');
           this._emit('disconnect');// DEPRECATED?
         }
@@ -434,6 +441,21 @@
         this._pathHandlers.change[path] = [];
       }
       this._pathHandlers.change[path].push(handler);
+    },
+
+    onConflict: function(path, handler) {
+      if (! this._conflictBound) {
+        this.on('features-loaded', function() {
+          if (this.local) {
+            this.local.on('conflict', this._dispatchEvent.bind(this, 'conflict'));
+          }
+        }.bind(this));
+        this._conflictBound = true;
+      }
+      if (! this._pathHandlers.conflict[path]) {
+        this._pathHandlers.conflict[path] = [];
+      }
+      this._pathHandlers.conflict[path].push(handler);
     },
 
     /**
@@ -769,14 +791,6 @@
    * Usually either a <RemoteStorage.IndexedDB> or <RemoteStorage.LocalStorage>
    * instance.
    */
-    
-  /**
-   ** reset
-   **/
-  RemoteStorage.prototype.reset = function() {
-    indexedDB.deleteDatabase('remotestorage');
-    localStorage.clear();
-  };
 
   global.RemoteStorage = RemoteStorage;
 
@@ -795,13 +809,6 @@
      * Install an event handler for the given event name.
      */
     addEventListener: function(eventName, handler) {
-      if (typeof(eventName) !== 'string') {
-        throw new Error('argument eventName should be a string');
-      }
-      if (typeof(handler) !== 'function') {
-        throw new Error('argument handler should be a function');
-      }
-      console.log('adding event listener', eventName, handler);
       this._validateEvent(eventName);
       this._handlers[eventName].push(handler);
     },
@@ -825,7 +832,6 @@
     _emit: function(eventName) {
       this._validateEvent(eventName);
       var args = Array.prototype.slice.call(arguments, 1);
-      //console.log('emitting to handlers', eventName, args, this._handler, this);
       this._handlers[eventName].forEach(function(handler) {
         handler.apply(this, args);
       });
@@ -966,25 +972,6 @@
     };
   }
 
-  function addQuotes(str) {
-    if (typeof(str) !== 'string') {
-      return str;
-    }
-    if (str === '*') {
-      return '*';
-    }
-
-    return '"' + str + '"';
-  }
-
-  function stripQuotes(str) {
-    if (typeof(str) !== 'string') {
-      return str;
-    }
-
-    return str.replace(/^["']|["']$/g, '');
-  }
-
   function readBinaryData(content, mimeType, callback) {
     var blob = new Blob([content], { type: mimeType });
     var reader = new FileReader();
@@ -1022,7 +1009,6 @@
    **/
   RS.WireClient = function(rs) {
     this.connected = false;
-
     /**
      * Event: change
      *   never fired for some reason
@@ -1122,7 +1108,6 @@
             isFolder: isFolder(uri),
             success: false
           });
-          self.online = false;
           promise.reject(error);
         } else {
           self._emit('wire-done', {
@@ -1130,33 +1115,24 @@
             isFolder: isFolder(uri),
             success: true
           });
-          self.online = true;
           if (isErrorStatus(response.status)) {
-            console.log('239 revision', response.status);
-            if (getEtag) {
-              revision = stripQuotes(response.getResponseHeader('ETag'));
-            } else {
-              revision = response.status === 200 ? fakeRevision : undefined;
-            }
-            promise.fulfill(response.status, undefined, undefined, revision);
+            promise.fulfill(response.status);
           } else if (isSuccessStatus(response.status) ||
                      (response.status === 200 && method !== 'GET')) {
-            revision = stripQuotes(response.getResponseHeader('ETag'));
-            console.log('242 revision', revision);
+            revision = response.getResponseHeader('ETag');
             promise.fulfill(response.status, undefined, undefined, revision);
           } else {
             var mimeType = response.getResponseHeader('Content-Type');
             var body;
             if (getEtag) {
-              revision = stripQuotes(response.getResponseHeader('ETag'));
+              revision = response.getResponseHeader('ETag');
             } else {
               revision = response.status === 200 ? fakeRevision : undefined;
             }
 
             if ((! mimeType) || mimeType.match(/charset=binary/)) {
               RS.WireClient.readBinaryData(response.response, mimeType, function(result) {
-              console.log('255 revision', revision);
-              promise.fulfill(response.status, result, mimeType, revision);
+                promise.fulfill(response.status, result, mimeType, revision);
               });
             } else {
               if (mimeType && mimeType.match(/^application\/json/)) {
@@ -1164,7 +1140,6 @@
               } else {
                 body = response.responseText;
               }
-              console.log('264 revision', revision);
               promise.fulfill(response.status, body, mimeType, revision);
             }
           }
@@ -1192,7 +1167,6 @@
       }
       if (this.href && this.token) {
         this.connected = true;
-        this.online = true;
         this._emit('connected');
       } else {
         this.connected = false;
@@ -1224,16 +1198,18 @@
       var headers = {};
       if (this.supportsRevs) {
         if (options.ifNoneMatch) {
-          headers['If-None-Match'] = addQuotes(options.ifNoneMatch);
+          headers['If-None-Match'] = options.ifNoneMatch;
         }
       } else if (options.ifNoneMatch) {
         var oldRev = this._revisionCache[path];
       }
       var promise = this._request('GET', this.href + cleanPath(path), this.token, headers,
                             undefined, this.supportsRevs, this._revisionCache[path]);
-      if (isFolder(path)) {
+      if (!isFolder(path)) {
+        return promise;
+      } else {
         return promise.then(function(status, body, contentType, revision) {
-          var itemsMap = {};
+          var listing = {};
 
           // New folder listing received
           if (status === 200 && typeof(body) === 'object') {
@@ -1246,22 +1222,31 @@
               for (var item in body.items) {
                 this._revisionCache[path + item] = body.items[item].ETag;
               }
-              itemsMap = body.items;
+              listing = body.items;
             }
             // < 02 spec
             else {
               Object.keys(body).forEach(function(key){
                 this._revisionCache[path + key] = body[key];
-                itemsMap[key] = {"ETag": body[key]};
+                listing[key] = {"ETag": body[key]};
               }.bind(this));
             }
-            return promising().fulfill(status, itemsMap, contentType, revision);
-          } else {
+            return promising().fulfill(status, listing, contentType, revision);
+          }
+          // No folder listing received
+          else if (status === 404) {
+            return promising().fulfill(404);
+          }
+          // Cached folder listing received
+          else if (status === 304) {
             return promising().fulfill(status, body, contentType, revision);
           }
+          // Faulty folder listing received
+          else {
+            var error = new Error("Received faulty folder response for: "+path);
+            return promising().reject(error);
+          }
         }.bind(this));
-      } else {
-        return promise;
       }
     },
 
@@ -1276,10 +1261,10 @@
       var headers = { 'Content-Type': contentType };
       if (this.supportsRevs) {
         if (options.ifMatch) {
-          headers['If-Match'] = addQuotes(options.ifMatch);
+          headers['If-Match'] = options.ifMatch;
         }
         if (options.ifNoneMatch) {
-          headers['If-None-Match'] = addQuotes(options.ifNoneMatch);
+          headers['If-None-Match'] = options.ifNoneMatch;
         }
       }
       return this._request('PUT', this.href + cleanPath(path), this.token,
@@ -1294,7 +1279,7 @@
       var headers = {};
       if (this.supportsRevs) {
         if (options.ifMatch) {
-          headers['If-Match'] = addQuotes(options.ifMatch);
+          headers['If-Match'] = options.ifMatch;
         }
       }
       return this._request('DELETE', this.href + cleanPath(path), this.token,
@@ -1378,7 +1363,6 @@
   RS.WireClient._rs_init = function(remoteStorage) {
     hasLocalStorage = remoteStorage.localStorageAvailable();
     remoteStorage.remote = new RS.WireClient(remoteStorage);
-    this.online = true;
   };
 
   RS.WireClient._rs_supported = function() {
@@ -1405,60 +1389,6 @@
   // cache loaded from localStorage
   var cachedInfo = {};
 
-  function parseLinks(links, userAddress, cb) {
-    var link, authURL, storageType;
-    
-    links.forEach(function(l) {
-      if (l.rel === 'remotestorage') {
-        link = l;
-      } else if (l.rel === 'remoteStorage' && !link) {
-        link = l;
-      }
-    });
-    if (link) {
-      RemoteStorage.log('picking:', link, 'from profile links:', links);
-      authURL = link.properties['http://tools.ietf.org/html/rfc6749#section-4.2']
-            || link.properties['auth-endpoint'];
-      storageType = link.properties['http://remotestorage.io/spec/version']
-            || link.type;
-      cachedInfo[userAddress] = { href: link.href, type: storageType, authURL: authURL };
-      if (hasLocalStorage) {
-        localStorage[SETTINGS_KEY] = JSON.stringify({ cache: cachedInfo });
-      }
-      RemoteStorage.log('extracted', cachedInfo);
-      cb(link.href, storageType, authURL);
-    } else {
-      RemoteStorage.log('could not find rel="remotestorage" link among profile links:', links);
-      cb();
-    }
-  }
-
-  function webfingerOnload(xhr, userAddress, cb) {
-    var profile;
-    if (xhr.status !== 200) {
-      RemoteStorage.log('webfinger responded with a '+xhr.status, xhr);
-      cb();
-      return;
-    }
-
-    try {
-      profile = JSON.parse(xhr.responseText);
-    } catch(e) {
-      RemoteStorage.log('Failed to parse webfinger profile ' + xhr.responseText, xhr);
-      cb();
-      return;
-    }
-
-    if (!profile.links) {
-      RemoteStorage.log('profile has no links section ' + JSON.stringify(profile));
-      cb();
-      return;
-    }
-
-    RemoteStorage.log('calling parseLinks', profile.links);
-    parseLinks(profile.links, userAddress, cb);
-  }
-
   /**
    * Class: RemoteStorage.Discover
    *
@@ -1480,20 +1410,68 @@
       return;
     }
     var hostname = userAddress.split('@')[1];
-    var scheme = (hostname.indexOf(':') === -1 ? 'https://' : 'http://');//special backdoor for the starter-kit
     var params = '?resource=' + encodeURIComponent('acct:' + userAddress);
-    var url = scheme + hostname + '/.well-known/webfinger' + params;
+    var urls = [
+      'https://' + hostname + '/.well-known/webfinger' + params,
+      'https://' + hostname + '/.well-known/host-meta.json' + params,
+      'http://' + hostname + '/.well-known/webfinger' + params,
+      'http://' + hostname + '/.well-known/host-meta.json' + params
+    ];
 
-    var xhr = new XMLHttpRequest();
-    RemoteStorage.log('try url', url);
-    xhr.open('GET', url, true);
-    xhr.onabort = xhr.onerror = function() {
-      console.error("webfinger error", arguments, '(', url, ')');
-    };
-    xhr.onload = function() {
-      webfingerOnload(xhr, userAddress, callback);
-    };
-    xhr.send();
+    function tryOne() {
+      var xhr = new XMLHttpRequest();
+      var url = urls.shift();
+      if (!url) { return callback(); }
+      RemoteStorage.log('try url', url);
+      xhr.open('GET', url, true);
+      xhr.onabort = xhr.onerror = function() {
+        console.error("webfinger error", arguments, '(', url, ')');
+        tryOne();
+      };
+      xhr.onload = function() {
+        if (xhr.status !== 200) { return tryOne(); }
+        var profile;
+
+        try {
+          profile = JSON.parse(xhr.responseText);
+        } catch(e) {
+          RemoteStorage.log("Failed to parse profile ", xhr.responseText, e);
+          tryOne();
+          return;
+        }
+
+        if (!profile.links) {
+          RemoteStorage.log("profile has no links section ", JSON.stringify(profile));
+          tryOne();
+          return;
+        }
+
+        var link;
+        profile.links.forEach(function(l) {
+          if (l.rel === 'remotestorage') {
+            link = l;
+          } else if (l.rel === 'remoteStorage' && !link) {
+            link = l;
+          }
+        });
+        RemoteStorage.log('got profile', profile, 'and link', link);
+        if (link) {
+          var authURL = link.properties['http://tools.ietf.org/html/rfc6749#section-4.2']
+                  || link.properties['auth-endpoint'],
+            storageType = link.properties['http://remotestorage.io/spec/version']
+                  || link.type;
+          cachedInfo[userAddress] = { href: link.href, type: storageType, authURL: authURL };
+          if (hasLocalStorage) {
+            localStorage[SETTINGS_KEY] = JSON.stringify({ cache: cachedInfo });
+          }
+          callback(link.href, storageType, authURL);
+        } else {
+          tryOne();
+        }
+      };
+      xhr.send();
+    }
+    tryOne();
   };
 
   RemoteStorage.Discover._rs_init = function(remoteStorage) {
@@ -1657,12 +1635,6 @@
     },
 
     set: function(scope, mode) {
-      if (typeof(scope) !== 'string' || scope.indexOf('/') !== -1 || scope.length === 0) {
-        throw new Error('scope should be a non-empty string without forward slashes');
-      }
-      if (mode !== 'r' && mode !== 'rw') {
-        throw new Error('mode should be either \'r\' or \'rw\'');
-      }
       this._adjustRootPaths(scope);
       this.scopeModeMap[scope] = mode;
     },
@@ -1687,34 +1659,6 @@
     check: function(scope, mode) {
       var actualMode = this.get(scope);
       return actualMode && (mode === 'r' || actualMode === 'rw');
-    },
-
-    getModuleName: function(path) {
-      var pos, parts = path.split('/');
-      if (parts[0] !== '') {
-        throw new Error('path should start with a slash');
-      }
-      // /a => ['', 'a'] parts.length: 2, pos: 1 -> *
-      // /a/ => ['', 'a', ''] parts.length: 3, pos: 1 -> a
-      // /public/a => ['', 'public', 'a'] parts.length: 3, pos: 2 -> *
-      // /public/a/ => ['', 'public', 'a', ''] parts.length: 4, pos: 2 -> a
-      if (parts[1] === 'public') {
-        pos = 2;
-      } else {
-        pos = 1;
-      }
-      if (parts.length <= pos+1) {
-        return '*';
-      }
-      return parts[pos];
-    },
-
-    checkPath: function(path, mode) {
-      //check root access
-      if (this.check('*', mode)) {
-        return true;
-      }
-      return !!this.check(this.getModuleName(path), mode);
     },
 
     reset: function() {
@@ -1949,10 +1893,6 @@ RemoteStorage.Assets = {
 
   function stateSetter(widget, state) {
     return function() {
-      console.log('setting state', state, arguments);
-      if(state === 'initial') {
-        throw new Error('why?');
-      }
       if (hasLocalStorage) {
         localStorage[LS_STATE_KEY] = state;
       }
@@ -1978,7 +1918,6 @@ RemoteStorage.Assets = {
       } else if (error instanceof RemoteStorage.Unauthorized){
         widget.view.setState('unauthorized');
       } else {
-        console.log('other error');
         widget.view.setState('error', [error]);
       }
     };
@@ -3478,10 +3417,15 @@ Math.uuid = function (len, radix) {
      *
      * * when newValue and oldValue are set you are dealing with an update
      **/
+    /**
+     * Event: conflict
+     *
+     **/
 
-    RS.eventHandling(this, 'change');
+    RS.eventHandling(this, 'change', 'conflict');
     this.on = this.on.bind(this);
     storage.onChange(this.base, this._fireChange.bind(this));
+    storage.onConflict(this.base, this._fireConflict.bind(this));
   };
 
   RS.BaseClient.prototype = {
@@ -3546,16 +3490,13 @@ Math.uuid = function (len, radix) {
      *   });
      *   (end code)
      */
-    getListing: function(path, maxAge) {
+    getListing: function(path) {
       if (typeof(path) !== 'string') {
         path = '';
       } else if (path.length > 0 && path[path.length - 1] !== '/') {
         throw "Not a folder: " + path;
       }
-      if (typeof(maxAge) !== 'undefined' && typeof(maxAge) !== 'number') {
-        return promising().reject('Argument \'maxAge\' of baseClient.getListing must be undefined or a number');
-      }
-      return this.storage.get(this.makePath(path), maxAge).then(
+      return this.storage.get(this.makePath(path)).then(
         function(status, body) {
           return (status === 404) ? undefined : body;
         }
@@ -3583,17 +3524,13 @@ Math.uuid = function (len, radix) {
      *   });
      *   (end code)
      */
-    getAll: function(path, maxAge) {
+    getAll: function(path) {
       if (typeof(path) !== 'string') {
         path = '';
       } else if (path.length > 0 && path[path.length - 1] !== '/') {
         throw "Not a folder: " + path;
       }
-      if (typeof(maxAge) !== 'undefined' && typeof(maxAge) !== 'number') {
-        return promising().reject('Argument \'maxAge\' of baseClient.getAll must be undefined or a number');
-      }
-
-      return this.storage.get(this.makePath(path), maxAge).then(function(status, body) {
+      return this.storage.get(this.makePath(path)).then(function(status, body) {
         if (status === 404) { return; }
         if (typeof(body) === 'object') {
           var promise = promising();
@@ -3604,7 +3541,7 @@ Math.uuid = function (len, radix) {
             return;
           }
           for (var key in body) {
-            this.storage.get(this.makePath(path + key), maxAge).
+            this.storage.get(this.makePath(path + key)).
               then(function(status, b) {
                 body[this.key] = b;
                 i++;
@@ -3646,15 +3583,12 @@ Math.uuid = function (len, radix) {
      *   });
      *   (end code)
      */
-    getFile: function(path, maxAge) {
+    getFile: function(path) {
       if (typeof(path) !== 'string') {
         return promising().reject('Argument \'path\' of baseClient.getFile must be a string');
       }
 
-      if (typeof(maxAge) !== 'undefined' && typeof(maxAge) !== 'number') {
-        return promising().reject('Argument \'maxAge\' of baseClient.getFile must be undefined or a number');
-      }
-      return this.storage.get(this.makePath(path), maxAge).then(function(status, body, mimeType, revision) {
+      return this.storage.get(this.makePath(path)).then(function(status, body, mimeType, revision) {
         return {
           data: body,
           mimeType: mimeType,
@@ -3740,14 +3674,11 @@ Math.uuid = function (len, radix) {
      *     });
      *   (end code)
      */
-    getObject: function(path, maxAge) {
+    getObject: function(path) {
       if (typeof(path) !== 'string') {
         return promising().reject('Argument \'path\' of baseClient.getObject must be a string');
       }
-      if (typeof(maxAge) !== 'undefined' && typeof(maxAge) !== 'number') {
-        return promising().reject('Argument \'maxAge\' of baseClient.getObject must be undefined or a number');
-      }
-      return this.storage.get(this.makePath(path), maxAge).then(function(status, body, mimeType, revision) {
+      return this.storage.get(this.makePath(path)).then(function(status, body, mimeType, revision) {
         if (typeof(body) === 'object') {
           return body;
         } else if (typeof(body) !== 'undefined' && status === 200) {
@@ -3845,32 +3776,31 @@ Math.uuid = function (len, radix) {
     },
 
 
-    cache: function(path, strategy) {
+    cache: function(path, enable) {
       if (typeof(path) !== 'string') {
         throw 'Argument \'path\' of baseClient.cache must be a string';
       }
-      if (strategy === undefined) {
-        strategy = this.storage.caching.ALL;
-      }
-      if (strategy !== this.storage.caching.SEEN &&
-          strategy !== this.storage.caching.SEEN_AND_FOLDERS &&
-          strategy !== this.storage.caching.ALL) {
-        throw 'Argument \'strategy\' of baseclient.cache must be one of '
-            + '[remoteStorage.caching.SEEN, remoteStorage.caching.SEEN_AND_FOLDERS, remoteStorage.caching.ALL]';
-      }
-      this.storage.caching.set(this.makePath(path), strategy);
+      this.storage.caching[enable === false ? 'disable' : 'enable'](
+        this.makePath(path),
+        this.storage.connected
+      );
+      return this;// why?
     },
 
-    flush: function(path) {
-      return this.storage.local.flush(path);
-    },
-    
     makePath: function(path) {
       return this.base + (path || '');
     },
 
     _fireChange: function(event) {
       this._emit('change', event);
+    },
+
+    _fireConflict: function(event) {
+      if (this._handlers.conflict.length > 0) {
+        this._emit('conflict', event);
+      } else {
+        event.resolve('remote');
+      }
     },
 
     _cleanPath: RS.WireClient.cleanPath,
