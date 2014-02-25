@@ -211,9 +211,11 @@
     flush: function(objs) {
       for (i in objs) {
         if (this.caching.checkPath(i) === this.caching.FLUSH && !objs[i].local) {//strategy is FLUSH and no local changes exist
+          RemoteStorage.log('flushing', i);
           objs[i] = undefined;//cause node to be flushed from cache
         }
       }
+      return objs;
     },
     doTask: function(path) {
       return this.local.getNodes([path]).then(function(objs) {
@@ -526,6 +528,11 @@
     },
     completePush: function(path, action, conflict, revision) {
       return this.local.getNodes([path]).then(function(objs) {
+        if (!objs[path].push) {
+          RemoteStorage.log('whoops!', path, action, conflict, revision, objs);
+          throw new Error('completePush called but no push version!');
+          this.stopped = true;
+        }
         if (conflict) {
           RemoteStorage.log('we have conflict');
           if (!objs[path].remote || objs[path].remote.revision !== revision) {

@@ -57,14 +57,13 @@
   };
 
   RS.IndexedDB.prototype = {
-
     getNodes: function(paths) {
       var promise = promising();
       var transaction = this.db.transaction(['nodes'], 'readonly');
       var nodes = transaction.objectStore('nodes');
-      var ret = {}, i, nodeReq;
-//      RemoteStorage.log('starting get');
+      var ret = {}, i, nodeReq, startTime = new Date().getTime();
       this.getsRunning++;
+//      RemoteStorage.log('starting get', paths, this.getsRunning);
       for (i=0; i<paths.length; i++) {
         (function(captureI) {
           nodes.get(paths[captureI]).onsuccess = function(evt) {
@@ -76,7 +75,7 @@
       transaction.oncomplete = function() {
         promise.fulfill(ret);
         this.getsRunning--;
-//        RemoteStorage.log('get complete');
+//        RemoteStorage.log('finished get', paths, this.getsRunning, (new Date().getTime() - startTime)+'ms');
       }.bind(this);
 
       transaction.onerror = transaction.onabort = function() {
@@ -91,9 +90,9 @@
       var promise = promising();
       var transaction = this.db.transaction(['nodes'], 'readwrite');
       var nodes = transaction.objectStore('nodes');
-      var i, nodeReq;
-//      RemoteStorage.log('starting put');
+      var i, nodeReq, startTime = new Date().getTime();
       this.putsRunning++;
+      RemoteStorage.log('starting put', objs, this.putsRunning);
       for (i in objs) {
         if(typeof(objs[i]) === 'object') {
           try {
@@ -114,8 +113,8 @@
       
       transaction.oncomplete = function() {
         promise.fulfill();
-//        RemoteStorage.log('put complete!');
         this.putsRunning--;
+        RemoteStorage.log('finished put', objs, this.putsRunning, (new Date().getTime() - startTime)+'ms');
       }.bind(this);
 
       transaction.onerror = function() {
