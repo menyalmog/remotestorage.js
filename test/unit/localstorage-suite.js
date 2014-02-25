@@ -44,6 +44,7 @@ define(['requirejs'], function(requirejs) {
     setup: function(env, test) {
       require('./lib/promising');
       global.RemoteStorage = function() {};
+      global.RemoteStorage.log = function() {};
       require('./src/eventhandling');
       if (global.rs_eventhandling) {
         RemoteStorage.eventHandling = global.rs_eventhandling;

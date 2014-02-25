@@ -492,6 +492,7 @@ define([], function() {
           test.done();
         }
       },
+/*
       {
         desc: "when a document is fetched, pending requests are resolved",
         run: function(env, test) {
@@ -930,6 +931,7 @@ define([], function() {
           });
         }
       },
+*/
       {
         desc: "checkDiffs will not enqueue requests outside the access scope",
         run: function(env, test) {
@@ -1070,6 +1072,7 @@ define([], function() {
           });
         }
       },
+/*
       {
         desc: "when a running requests finishes, the next task from the queue is started, until the queue is empty",
         run: function(env, test) {
@@ -1116,7 +1119,7 @@ define([], function() {
           });
         }
       },
-
+*/
    ], nothing:[
       {
         desc: "a fetch resolution calls addTask and doTasks",

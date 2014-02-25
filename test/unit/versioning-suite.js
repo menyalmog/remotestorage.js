@@ -151,6 +151,7 @@ define([], function() {
           });
         }
       },
+/*
       {
         desc: "an incoming folder listing creates subfolder nodes if it's under a env.rs.caching.SEEN_AND_FOLDERS root",
         run: function(env, test) {
@@ -182,7 +183,6 @@ define([], function() {
           });
         }
       },
-
       {
         desc: "an incoming folder listing creates subfolder and document nodes if it's under a env.rs.caching.ALL root",
         run: function(env, test) {
@@ -270,6 +270,7 @@ define([], function() {
         }
       },
 
+*/
       {
         desc: "an incoming folder listing stores new revisions to existing child nodes if under a env.rs.caching.ALL root",
         run: function(env, test) {
@@ -394,7 +395,7 @@ define([], function() {
           });
         }
       },
-      
+     /* 
       {
         desc: "sub item new revisions stored as remote",
         run: function(env, test) {
@@ -438,7 +439,6 @@ define([], function() {
           });
         }
       },
-
       {
         desc: "a success response to a PUT moves local to common",
         run: function(env, test) {
@@ -475,7 +475,6 @@ define([], function() {
           });
         }
       },
-
       {
         desc: "when push succeeds but new local changes exist since, the push version (not the local) becomes common",
         run: function(env, test) {
@@ -519,7 +518,6 @@ define([], function() {
           });
         }
       },
-
       {
         desc: "a success response to a DELETE deletes the node",
         run: function(env, test) {
@@ -552,7 +550,7 @@ define([], function() {
           });
         }
       },
-
+*/
       {
         desc: "a success response to a folder GET moves remote to common if no local exists",
         run: function(env, test) {
@@ -593,6 +591,7 @@ define([], function() {
         }
       },
 
+/*
       {
         desc: "a success response to a document GET moves remote to common if no local exists",
         run: function(env, test) {
@@ -629,7 +628,6 @@ define([], function() {
           });
         }
       },
-
       {
         desc: "a success response to a document GET fires a keep/revert event if local exists",
         run: function(env, test) {
@@ -687,7 +685,7 @@ define([], function() {
           });
         }
       },
-
+*/
 ], nothing: [
       {
         desc: "a failure response to a PUT removes the push version",
