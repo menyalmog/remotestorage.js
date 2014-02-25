@@ -13,9 +13,6 @@
     console.log('producing stateSetter for', state);
     return function() {
       RemoteStorage.log('setting state', state, arguments);
-      if(state === 'initial') {
-        throw new Error('why?');
-      }
       if (hasLocalStorage) {
         localStorage[LS_STATE_KEY] = state;
       }
@@ -105,10 +102,6 @@
       var state = localStorage[LS_STATE_KEY];
       if (state && VALID_ENTRY_STATES[state]) {
         this._rememberedState = state;
-
-        if (state === 'connected' && ! remoteStorage.connected) {
-          this._rememberedState = 'initial';
-        }
       }
     }
   };
