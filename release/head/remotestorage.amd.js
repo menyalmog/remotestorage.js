@@ -384,7 +384,7 @@ define([], function() {
         i++;
         if (i >= n) {
           this._init();
-          console.log('done cleaning up, emitting disconnected and disconnect events');
+          RemoteStorage.log('done cleaning up, emitting disconnected and disconnect events');
           this._emit('disconnected');
           this._emit('disconnect');// DEPRECATED?
         }
@@ -802,7 +802,7 @@ define([], function() {
       if (typeof(handler) !== 'function') {
         throw new Error('argument handler should be a function');
       }
-      console.log('adding event listener', eventName, handler);
+      RemoteStorage.log('adding event listener', eventName, handler);
       this._validateEvent(eventName);
       this._handlers[eventName].push(handler);
     },
@@ -826,7 +826,7 @@ define([], function() {
     _emit: function(eventName) {
       this._validateEvent(eventName);
       var args = Array.prototype.slice.call(arguments, 1);
-      //console.log('emitting to handlers', eventName, args, this._handler, this);
+      //RemoteStorage.log('emitting to handlers', eventName, args, this._handler, this);
       this._handlers[eventName].forEach(function(handler) {
         handler.apply(this, args);
       });
@@ -874,8 +874,8 @@ define([], function() {
    *   };
    *
    *   var myObject = new MyConstructor();
-   *   myObject.on('connected', function() { console.log('connected'); });
-   *   myObject.on('disconnected', function() { console.log('disconnected'); });
+   *   myObject.on('connected', function() { RemoteStorage.log('connected'); });
+   *   myObject.on('disconnected', function() { RemoteStorage.log('disconnected'); });
    *   // this would throw an exception as well:
    *   //myObject.on('something-else', function() {});
    *
@@ -1133,7 +1133,7 @@ define([], function() {
           });
           self.online = true;
           if (isErrorStatus(response.status)) {
-            console.log('239 revision', response.status);
+            RemoteStorage.log('239 revision', response.status);
             if (getEtag) {
               revision = stripQuotes(response.getResponseHeader('ETag'));
             } else {
@@ -1143,7 +1143,7 @@ define([], function() {
           } else if (isSuccessStatus(response.status) ||
                      (response.status === 200 && method !== 'GET')) {
             revision = stripQuotes(response.getResponseHeader('ETag'));
-            console.log('242 revision', revision);
+            RemoteStorage.log('242 revision', revision);
             promise.fulfill(response.status, undefined, undefined, revision);
           } else {
             var mimeType = response.getResponseHeader('Content-Type');
@@ -1156,7 +1156,7 @@ define([], function() {
 
             if ((! mimeType) || mimeType.match(/charset=binary/)) {
               RS.WireClient.readBinaryData(response.response, mimeType, function(result) {
-              console.log('255 revision', revision);
+              RemoteStorage.log('255 revision', revision);
               promise.fulfill(response.status, result, mimeType, revision);
               });
             } else {
@@ -1165,7 +1165,7 @@ define([], function() {
               } else {
                 body = response.responseText;
               }
-              console.log('264 revision', revision);
+              RemoteStorage.log('264 revision', revision);
               promise.fulfill(response.status, body, mimeType, revision);
             }
           }
@@ -1950,7 +1950,7 @@ RemoteStorage.Assets = {
 
   function stateSetter(widget, state) {
     return function() {
-      console.log('setting state', state, arguments);
+      RemoteStorage.log('setting state', state, arguments);
       if(state === 'initial') {
         throw new Error('why?');
       }
@@ -1979,7 +1979,7 @@ RemoteStorage.Assets = {
       } else if (error instanceof RemoteStorage.Unauthorized){
         widget.view.setState('unauthorized');
       } else {
-        console.log('other error');
+        RemoteStorage.log('other error');
         widget.view.setState('error', [error]);
       }
     };
@@ -3389,7 +3389,7 @@ Math.uuid = function (len, radix) {
 (function(global) {
 
   function deprecate(thing, replacement) {
-    console.log('WARNING: ' + thing + ' is deprecated. Use ' +
+    RemoteStorage.log('WARNING: ' + thing + ' is deprecated. Use ' +
                 replacement + ' instead.');
   }
 
@@ -3542,7 +3542,7 @@ Math.uuid = function (len, radix) {
      *   (start code)
      *   client.getListing('').then(function(listing) {
      *     listing.forEach(function(item) {
-     *       console.log(item);
+     *       RemoteStorage.log(item);
      *     });
      *   });
      *   (end code)
@@ -3579,7 +3579,7 @@ Math.uuid = function (len, radix) {
      *   (start code)
      *   client.getAll('').then(function(objects) {
      *     for (var key in objects) {
-     *       console.log('- ' + key + ': ', objects[key]);
+     *       RemoteStorage.log('- ' + key + ': ', objects[key]);
      *     }
      *   });
      *   (end code)
@@ -4093,7 +4093,8 @@ Math.uuid = function (len, radix) {
   };
 
   RemoteStorage.Caching.prototype = {
-    SEEN: false,
+    FLUSH: false,
+    SEEN: 'seen',
     SEEN_AND_FOLDERS: { data: false },
     ALL: { data: true },
     pendingActivations: [],
@@ -4110,7 +4111,7 @@ Math.uuid = function (len, radix) {
         throw new Error("value should be something like remoteStorage.caching.FOLDERS_AND_SEEN");
       }
       this._rootPaths[path] = value;
-      console.log('call activate handler?', (value === this.SEEN_AND_FOLDERS), (value === this.ALL), (this.activateHandler));
+      RemoteStorage.log('call activate handler?', (value === this.SEEN_AND_FOLDERS), (value === this.ALL), (this.activateHandler));
       if (value === this.SEEN_AND_FOLDERS || value === this.ALL) {
         if (this.activateHandler) {
           this.activateHandler(path);
@@ -4119,10 +4120,17 @@ Math.uuid = function (len, radix) {
         }
       } 
     },
+    
+    enable: function(path) {
+      this.set(path, this.ALL);
+    },
+    disable: function(path) {
+      this.set(path, this.FLUSH);
+    },
 
     onActivate: function(cb) {
       var i;
-      console.log('setting activate handler', cb, this.pendingActivations);
+      RemoteStorage.log('setting activate handler', cb, this.pendingActivations);
       this.activateHandler = cb;
       for(i=0; i<this.pendingActivations.length; i++) {
         cb(this.pendingActivations[i]);
@@ -4292,8 +4300,8 @@ Math.uuid = function (len, radix) {
           return;
         }
         if (this.isCorrupt(node, false)) {
-          console.log('WARNING: corrupt node in local cache', node);
-          //console.log((typeof(node) !== 'object'),
+          RemoteStorage.log('WARNING: corrupt node in local cache', node);
+          //RemoteStorage.log((typeof(node) !== 'object'),
           //  (Array.isArray(node)),
           //  (typeof(node.path) !== 'string'),
           //  (this.corruptRevision(node.common)),
@@ -4387,6 +4395,13 @@ Math.uuid = function (len, radix) {
         throw err;
       });
     },
+    flush: function(objs) {
+      for (i in objs) {
+        if (this.caching.checkPath(i) === this.caching.FLUSH && !objs[i].local) {//strategy is FLUSH and no local changes exist
+          objs[i] = undefined;//cause node to be flushed from cache
+        }
+      }
+    },
     doTask: function(path) {
       return this.local.getNodes([path]).then(function(objs) {
         if(typeof(objs[path]) === 'undefined') {
@@ -4407,7 +4422,7 @@ Math.uuid = function (len, radix) {
           //push put:
           objs[path].push = this.local._getInternals()._deepClone(objs[path].local);
           objs[path].push.timestamp =  this.now();
-          return this.local.setNodes(objs).then(function() {
+          return this.local.setNodes(this.flush(objs)).then(function() {
             var options;
             if (objs[path].common && objs[path].common.revision) {
               options = {
@@ -4428,7 +4443,7 @@ Math.uuid = function (len, radix) {
         } else if (objs[path].local && objs[path].local.body === false) {
           //push delete:
           objs[path].push = { body: false, timestamp: this.now() };
-          return this.local.setNodes(objs).then(function() {
+          return this.local.setNodes(this.flush(objs)).then(function() {
             if (objs[path].common && objs[path].common.revision) {
               return {
                 action: 'delete',
@@ -4512,7 +4527,7 @@ Math.uuid = function (len, radix) {
       } else {
         if (obj.remote.body !== undefined) {
           //keep/revert:
-          console.log('emitting keep/revert');
+          RemoteStorage.log('emitting keep/revert');
           this.local._emit('change', {
             origin: 'conflict',
             path: obj.path,
@@ -4597,9 +4612,9 @@ Math.uuid = function (len, radix) {
             changedObjs[j] = undefined;
           }
         }
-        console.log('line 421', this);
+        RemoteStorage.log('line 421', this);
         return this.deleteRemoteTrees(Object.keys(recurse), changedObjs).then(function(changedObjs2) {
-          return this.local.setNodes(changedObjs2);
+          return this.local.setNodes(this.flush(changedObjs2));
         }.bind(this));
       }.bind(this));
     },
@@ -4607,7 +4622,7 @@ Math.uuid = function (len, radix) {
       if (paths.length === 0) {
         return promising().fulfill(changedObjs);
       }
-      console.log('431');
+      RemoteStorage.log('431');
       this.local.getNodes(paths).then(function(objs) {
         var i, j, subPaths = {};
         for (i in objs) {
@@ -4625,7 +4640,7 @@ Math.uuid = function (len, radix) {
               }
             } else {
               if (objs[i].common && typeof(objs[i].common.body) !== undefined) {
-                console.log('cloning', changedObjs, i, objs, j);
+                RemoteStorage.log('cloning', changedObjs, i, objs, j);
                 changedObjs[i] = this.local._getInternals()._deepClone(objs[i]);
                 changedObjs[i].remote = {
                   body: false,
@@ -4636,18 +4651,16 @@ Math.uuid = function (len, radix) {
             }
           }
         }
-              console.log('460');
+              RemoteStorage.log('460');
         //recurse whole tree depth levels at once:
         return this.deleteRemoteTrees(Object.keys(subPaths), changedObjs).then(function(changedObjs2) {
-      console.log('463');
-          return this.local.setNodes(changedObjs2);
+      RemoteStorage.log('463');
+          return this.local.setNodes(this.flush(changedObjs2));
         }.bind(this));
       }.bind(this));
     },
     completeFetch: function(path, bodyOrItemsMap, contentType, revision) {
-
       return this.local.getNodes([path]).then(function(objs) {
-
         var i, missingChildren = {};
         if(typeof(objs[path]) !== 'object'  || objs[path].path !== path || typeof(objs[path].common) !== 'object') {
           objs[path] = {
@@ -4701,7 +4714,7 @@ Math.uuid = function (len, radix) {
     completePush: function(path, action, conflict, revision) {
       return this.local.getNodes([path]).then(function(objs) {
         if (conflict) {
-          console.log('we have conflict');
+          RemoteStorage.log('we have conflict');
           if (!objs[path].remote || objs[path].remote.revision !== revision) {
             objs[path].remote = {
               revision: revision,
@@ -4729,14 +4742,14 @@ Math.uuid = function (len, radix) {
             }
           }
         }
-        return this.local.setNodes(objs);
+        return this.local.setNodes(this.flush(objs));
       }.bind(this));
     },
     dealWithFailure: function(path, action, statusMeaning) {
       return this.local.getNodes([path]).then(function(objs) {
         if (objs[path]) {
           delete objs[path].push;
-          return this.local.setNodes(objs);
+          return this.local.setNodes(this.flush(objs));
         }
       }.bind(this));
     },
@@ -4766,7 +4779,7 @@ Math.uuid = function (len, radix) {
             return this.completeFetch(path, bodyOrItemsMap, contentType, revision).then(function(dataFromFetch) {
               if (path.substr(-1) === '/') {
                 if (this.corruptServerItemsMap(bodyOrItemsMap)) {
-                  console.log('WARNING: discarding corrupt folder description from server for ' + path);
+                  RemoteStorage.log('WARNING: discarding corrupt folder description from server for ' + path);
                   return false;
                 } else {
                   return this.markChildren(path, bodyOrItemsMap, dataFromFetch.toBeSaved, dataFromFetch.missingChildren).then(function() {
@@ -4774,7 +4787,7 @@ Math.uuid = function (len, radix) {
                   });
                 }
               } else {
-                return this.local.setNodes(dataFromFetch.toBeSaved).then(function() {
+                return this.local.setNodes(this.flush(dataFromFetch.toBeSaved)).then(function() {
                   return true;//task completed
                 });
               }
@@ -4824,19 +4837,20 @@ Math.uuid = function (len, radix) {
           this._emit('req-done');
           this.findTasks(false).then(function() {//see if there are any more tasks that are not refresh tasks
             if (Object.getOwnPropertyNames(this._tasks).length === 0 || this.stopped) {
-              console.log('sync is done! reschedule?', Object.getOwnPropertyNames(this._tasks).length, this.stopped);
+              RemoteStorage.log('sync is done! reschedule?', Object.getOwnPropertyNames(this._tasks).length, this.stopped);
               this._emit('done');
             } else {
-              //use a zero timeout to let the JavaScript runtime catch its breath
-              //(and hopefully force an IndexedDB auto-commit?):
+              //use a 10ms timeout to let the JavaScript runtime catch its breath
+              //(and hopefully force an IndexedDB auto-commit?), and also to cause
+              //the threads to get staggered and get a good spread over time:
               setTimeout(function() {
                 this.doTasks();
-              }.bind(this), 0);
+              }.bind(this), 10);
             }
           }.bind(this));
         }.bind(this),
         function(err) {
-          console.log('bug!', err);
+          RemoteStorage.log('bug!', err);
           this.remote.online = false;
           delete this._timeStarted[obj.path];
           delete this._running[obj.path];
@@ -4883,7 +4897,7 @@ Math.uuid = function (len, radix) {
     },
     findTasks: function(alsoCheckRefresh) {
       if (Object.getOwnPropertyNames(this._tasks).length > 0 || this.stopped) {
-        //console.log('have tasks or stopped; findTasks skipped');
+        //RemoteStorage.log('have tasks or stopped; findTasks skipped');
         promise = promising();
         promise.fulfill();
         return promise;
@@ -4919,14 +4933,14 @@ Math.uuid = function (len, radix) {
           try {
             this.doTasks();
           } catch(e) {
-            console.log('doTasks error', e);
+            RemoteStorage.log('doTasks error', e);
           }
         }.bind(this), function(err) {
-          console.log('sync error', err);
+          RemoteStorage.log('sync error', err);
           throw new Error('local cache unavailable');
         });
       } else {
-        console.log('doTasks returned true');
+        RemoteStorage.log('doTasks returned true');
         return promising().fulfill();
       }
     }
@@ -4984,21 +4998,21 @@ Math.uuid = function (len, radix) {
       return;
     }  
     this.sync.on('done', function() {
-      console.log('done caught! setting timer', this.getSyncInterval());
+      RemoteStorage.log('done caught! setting timer', this.getSyncInterval());
       if (!this.sync.stopped) {
         this._syncTimer = setTimeout(this.sync.sync.bind(this.sync), this.getSyncInterval());
       }
     }.bind(this));
-    console.log('syncCycle calling sync.sync:');
+    RemoteStorage.log('syncCycle calling sync.sync:');
     this.sync.sync();
   };
 
   RemoteStorage.prototype.stopSync = function() {
     if (this.sync) {
-      console.log('stopping sync');
+      RemoteStorage.log('stopping sync');
       this.sync.stopped = true;
     } else {
-      console.log('will instantiate sync stopped');
+      RemoteStorage.log('will instantiate sync stopped');
       this.syncStopped = true;
     }
   };
@@ -5011,19 +5025,19 @@ Math.uuid = function (len, radix) {
   var syncCycleCb;
   RemoteStorage.Sync._rs_init = function(remoteStorage) {
     syncCycleCb = function() {
-      console.log('syncCycleCb calling syncCycle:');
+      RemoteStorage.log('syncCycleCb calling syncCycle:');
       if(!remoteStorage.sync) {
         //call this now that all other modules are also ready:
         remoteStorage.sync = new RemoteStorage.Sync(
             remoteStorage.local, remoteStorage.remote, remoteStorage.access,
             remoteStorage.caching);
         if (remoteStorage.syncStopped) {
-          console.log('instantiating sync stopped');
+          RemoteStorage.log('instantiating sync stopped');
           remoteStorage.sync.stopped = true;
           delete remoteStorage.syncStopped;
         }
       }  
-      console.log('syncCycleCb calling syncCycle:');
+      RemoteStorage.log('syncCycleCb calling syncCycle:');
       remoteStorage.syncCycle();
     };
     remoteStorage.on('ready', syncCycleCb);
@@ -5127,11 +5141,11 @@ Math.uuid = function (len, radix) {
   var methods = {
     //GPD interface:
     get: function(path, maxAge) {
-//      console.log('get', path, maxAge);
+//      RemoteStorage.log('get', path, maxAge);
       var promise = promising();
       this.getNodes([path]).then(function(objs) {
         var latest = _getLatest(objs[path]);
-//        console.log('maxAge', maxAge, (typeof(maxAge) === 'number'),
+//        RemoteStorage.log('maxAge', maxAge, (typeof(maxAge) === 'number'),
 //             !latest,
 //             !latest.timestamp,
 //             ((new Date().getTime()) - latest.timestamp > maxAge));
@@ -5232,7 +5246,7 @@ Math.uuid = function (len, radix) {
           }
           return objs;
         } catch(e) {
-          console.log('error while putting', objs, i, e);
+          RemoteStorage.log('error while putting', objs, i, e);
           throw e;
         }
       });
@@ -5439,16 +5453,19 @@ Math.uuid = function (len, radix) {
     }
     RS.cachingLayer(this);
     RS.eventHandling(this, 'change');
+    this.getsRunning = 0;
+    this.putsRunning = 0;
   };
 
   RS.IndexedDB.prototype = {
 
     getNodes: function(paths) {
-    
       var promise = promising();
       var transaction = this.db.transaction(['nodes'], 'readonly');
       var nodes = transaction.objectStore('nodes');
       var ret = {}, i, nodeReq;
+//      RemoteStorage.log('starting get');
+      this.getsRunning++;
       for (i=0; i<paths.length; i++) {
         (function(captureI) {
           nodes.get(paths[captureI]).onsuccess = function(evt) {
@@ -5459,9 +5476,15 @@ Math.uuid = function (len, radix) {
       
       transaction.oncomplete = function() {
         promise.fulfill(ret);
-      };
+        this.getsRunning--;
+//        RemoteStorage.log('get complete');
+      }.bind(this);
 
-      transaction.onerror = transaction.onabort = promise.reject;
+      transaction.onerror = transaction.onabort = function() {
+        promise.reject('get transaction error/abort');
+        this.getsRunning--;
+      }.bind(this);
+      
       return promise;
     },
 
@@ -5470,35 +5493,40 @@ Math.uuid = function (len, radix) {
       var transaction = this.db.transaction(['nodes'], 'readwrite');
       var nodes = transaction.objectStore('nodes');
       var i, nodeReq;
+//      RemoteStorage.log('starting put');
+      this.putsRunning++;
       for (i in objs) {
         if(typeof(objs[i]) === 'object') {
           try {
             nodes.put(objs[i]);
           } catch(e) {
-            console.log('error while putting', objs[i], e);
+            RemoteStorage.log('error while putting', objs[i], e);
             throw e;
           }
         } else {
           try {
             nodes.delete(i);
           } catch(e) {
-            console.log('error while removing', nodes, objs[i], e);
+            RemoteStorage.log('error while removing', nodes, objs[i], e);
             throw e;
           }
         }
       }
       
       transaction.oncomplete = function() {
-//        console.log('transaction complete!');
         promise.fulfill();
-      };
+//        RemoteStorage.log('put complete!');
+        this.putsRunning--;
+      }.bind(this);
 
       transaction.onerror = function() {
         promise.reject('transaction error');
-      }
+        this.putsRunning--;
+      }.bind(this);
       transaction.onabort = function() {
         promise.reject('transaction abort');
-      }
+        this.putsRunning--;
+      }.bind(this);
       return promise;
     },
 
@@ -5676,7 +5704,7 @@ Math.uuid = function (len, radix) {
     },
 
     setNodes: function(objs) {
-    console.log('ls setNodes'); 
+    RemoteStorage.log('ls setNodes'); 
       var i, promise = promising();
       for(i in objs) {
         localStorage[NODES_PREFIX+i] = JSON.stringify(objs[i]);
@@ -5721,7 +5749,7 @@ Math.uuid = function (len, radix) {
       }
     }
     remove.forEach(function(key) {
-      console.log('removing', key);
+      RemoteStorage.log('removing', key);
       delete localStorage[key];
     });
   };
@@ -5735,7 +5763,7 @@ Math.uuid = function (len, radix) {
   RemoteStorage.InMemoryStorage = function(rs) {
     this.rs = rs;
     RemoteStorage.cachingLayer(this);
-    console.log('registering events');
+    RemoteStorage.log('registering events');
     RemoteStorage.eventHandling(this, 'change');
     this._storage = {};
   };
@@ -5751,7 +5779,7 @@ Math.uuid = function (len, radix) {
     },
 
     setNodes: function(objs) {
-    console.log('inmem setNodes');
+    RemoteStorage.log('inmem setNodes');
       var i, promise = promising();
       for(i in objs) {
         if(objs[i] === undefined) {
@@ -6739,7 +6767,7 @@ Math.uuid = function (len, radix) {
      *   set's the connected flag
      **/
     configure: function(userAddress, href, storageApi, token) {
-      console.log('dropbox configure',arguments);
+      RemoteStorage.log('dropbox configure',arguments);
       if (typeof token !== 'undefined') { this.token = token; }
       if (typeof userAddress !== 'undefined') { this.userAddress = userAddress; }
 
@@ -6809,7 +6837,7 @@ Math.uuid = function (len, radix) {
      *   calls share(path) afterwards to fill the _hrefCache
      **/
     get: function(path, options){
-      console.log('dropbox.get', arguments);
+      RemoteStorage.log('dropbox.get', arguments);
       if (! this.connected) { throw new Error("not connected (path: " + path + ")"); }
       path = cleanPath(path);
       var url = 'https://api-content.dropbox.com/1/files/auto' + path;
@@ -6818,14 +6846,14 @@ Math.uuid = function (len, radix) {
       var savedRev = this._revCache.get(path);
       if (savedRev === null) {
         //file was deleted server side
-        console.log(path,' deleted 404');
+        RemoteStorage.log(path,' deleted 404');
         promise.fulfill(404);
         return promise;
       }
       if (options && options.ifNoneMatch &&
          savedRev && (savedRev === options.ifNoneMatch)) {
         // nothing changed.
-        console.log("nothing changed for",path,savedRev, options.ifNoneMatch);
+        RemoteStorage.log("nothing changed for",path,savedRev, options.ifNoneMatch);
         promise.fulfill(304);
         return promise;
       }
@@ -6885,7 +6913,7 @@ Math.uuid = function (len, radix) {
      *   also shares via share(path)
      **/
     put: function(path, body, contentType, options){
-      console.log('dropbox.put', arguments);
+      RemoteStorage.log('dropbox.put', arguments);
       if (! this.connected) { throw new Error("not connected (path: " + path + ")"); }
       path = cleanPath(path);
 
@@ -6908,7 +6936,7 @@ Math.uuid = function (len, radix) {
       }
       if (body.length>150*1024*1024){ //FIXME actual content-length
         //https://www.dropbox.com/developers/core/docs#chunked-upload
-        console.log('files larger than 150MB not supported yet');
+        RemoteStorage.log('files larger than 150MB not supported yet');
       } else {
         this._request('PUT', url, {body:body, headers:{'Content-Type':contentType}}, function(err, resp) {
           if (err) {
@@ -6936,7 +6964,7 @@ Math.uuid = function (len, radix) {
      *   similar to get and set
      **/
     'delete': function(path, options){
-      console.log('dropbox.delete ', arguments);
+      RemoteStorage.log('dropbox.delete ', arguments);
       if (! this.connected) { throw new Error("not connected (path: " + path + ")"); }
       path = cleanPath(path);
 
@@ -6978,16 +7006,16 @@ Math.uuid = function (len, radix) {
       var promise = promising();
       var self = this;
       if (path.match(/^\/public\/.*[^\/]$/) && typeof this._itemRefs[path] === 'undefined') {
-        console.log('shareing this one ', path);
+        RemoteStorage.log('shareing this one ', path);
         promise.then(function(){
           var args = Array.prototype.slice.call(arguments);
           var p = promising();
-          console.log('calling share now');
+          RemoteStorage.log('calling share now');
           self.share(path).then(function() {
-            console.log('shareing fullfilled promise',arguments);
+            RemoteStorage.log('shareing fullfilled promise',arguments);
             p.fulfill.apply(p,args);
           }, function(err) {
-            console.log("shareing failed" , err);
+            RemoteStorage.log("shareing failed" , err);
             p.fulfill.apply(p,args);
           });
           return p;
@@ -7009,7 +7037,7 @@ Math.uuid = function (len, radix) {
       // requesting shareing url
       this._request('POST', url, {}, function(err, resp){
         if (err) {
-          console.log(err);
+          RemoteStorage.log(err);
           err.message = 'Shareing Dropbox Thingie("'+path+'") failed' + err.message;
           promise.reject(err);
         } else {
@@ -7017,7 +7045,7 @@ Math.uuid = function (len, radix) {
             var response = JSON.parse(resp.responseText);
             var url = response.url;
             itemRefs[path] = url;
-            console.log("SHAREING URL :::: ",url,' for ',path);
+            RemoteStorage.log("SHAREING URL :::: ",url,' for ',path);
             if (hasLocalStorage) {
               localStorage[SETTINGS_KEY+":shares"] = JSON.stringify(this._itemRefs);
             }
@@ -7096,7 +7124,7 @@ Math.uuid = function (len, radix) {
               this.rs._emit('error', new RemoteStorage.Unauthorized());
               promise.fulfill.apply(promise, args);
             } else {
-              console.log("!!!!dropbox.fetchDelta returned "+response.status+response.responseText);
+              RemoteStorage.log("!!!!dropbox.fetchDelta returned "+response.status+response.responseText);
               promise.reject("dropbox.fetchDelta returned "+response.status+response.responseText);
             }
             return promise;
@@ -7111,7 +7139,7 @@ Math.uuid = function (len, radix) {
           }
           // break if no entries found
           if (!delta.entries) {
-            console.log("!!!!!DropBox.fetchDeltas() NO ENTRIES FOUND!!", delta);
+            RemoteStorage.log("!!!!!DropBox.fetchDeltas() NO ENTRIES FOUND!!", delta);
             return promise.reject('dropbox.fetchDeltas failed, no entries found');
           }
 
@@ -7132,7 +7160,7 @@ Math.uuid = function (len, radix) {
           }
 
           //updating revCache
-          console.log("Delta : ",delta.entries);
+          RemoteStorage.log("Delta : ",delta.entries);
           delta.entries.forEach(function(entry) {
             var path = entry[0];
             var rev;
