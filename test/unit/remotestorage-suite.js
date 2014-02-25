@@ -237,35 +237,6 @@ define([], function() {
           });
           env.rs.connect("someone@timeout");
         }
-      },
-], nothing: [
-      {
-        desc: "get goes to local if it exists",
-        run: function(env, test) {
-          env.rs.local = {
-            get: function(path, maxAge) {
-              test.assertAnd(path, 'path');
-              test.assertAnd(maxAge, 123);
-              test.done();
-            }
-          };
-          env.rs.get('path', 123);
-        }
-      },
-
-      {
-        desc: "get goes to remote if local doesn't exist",
-        run: function(env, test) {
-          delete env.rs.local;
-          env.rs.remote = {
-            get: function(path, options) {
-              test.assertAnd(path, 'path');
-              test.assertAnd(options, undefined);
-              test.done();
-            }
-          };
-          env.rs.get('path', 123);
-        }
       }
     ]
   });
