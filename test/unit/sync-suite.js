@@ -221,8 +221,8 @@ define([], function() {
       {
         desc: "Setting a wrong sync interval throws an error",
         run: function(env, test) {
-                test.assertAnd(env.rs.sync._tasks, {});
-                test.assertAnd(env.rs.sync._running, {});
+          test.assertAnd(env.rs.sync._tasks, {});
+          test.assertAnd(env.rs.sync._running, {});
           try {
             env.rs.setSyncInterval('60000');
             test.result(false, "setSyncInterval() didn't fail");
@@ -234,85 +234,85 @@ define([], function() {
       {
         desc: "Sync calls doTasks, and goes to findTasks only if necessary",
         run: function(env, test) {
-                test.assertAnd(env.rs.sync._tasks, {});
-                test.assertAnd(env.rs.sync._running, {});
-           var doTasksCalled = 0, findTasksCalled = 0, addTaskCalled = 0,
-             tmpDoTasks = env.rs.sync.doTasks,
-             tmpFindTasks = env.rs.sync.findTasks,
-             tmpAddTasks = env.rs.sync.addTasks;
+          test.assertAnd(env.rs.sync._tasks, {});
+          test.assertAnd(env.rs.sync._running, {});
+          var doTasksCalled = 0, findTasksCalled = 0, addTaskCalled = 0,
+            tmpDoTasks = env.rs.sync.doTasks,
+            tmpFindTasks = env.rs.sync.findTasks,
+            tmpAddTasks = env.rs.sync.addTasks;
            
-           env.rs.sync.doTasks = function() {
-             doTasksCalled++;
-             if (addTaskCalled) {
-               return true;
-             } else {
-               return false;
-             }
-           }
-           env.rs.sync.findTasks = function() {
-             findTasksCalled++;
-             return promising().fulfill();
-           }
-           env.rs.sync.addTask = function() {
-             addTaskCalled++;
-           }
-           env.rs.sync.sync().then(function() {
-             test.assertAnd(doTasksCalled, 2);
-             test.assertAnd(findTasksCalled, 1);
-             env.rs.sync.addTask('/foo', function() {});
-             return env.rs.sync.sync();
-           }).then(function() {
-             test.assertAnd(doTasksCalled, 3);
-             test.assertAnd(findTasksCalled, 1);
-             env.rs.sync.doTasks = tmpDoTasks;
-             env.rs.sync.findTasks = tmpFindTasks;
-             env.rs.sync.addTasks = tmpAddTasks;
-             test.done();
-           });
+          env.rs.sync.doTasks = function() {
+            doTasksCalled++;
+            if (addTaskCalled) {
+              return true;
+            } else {
+              return false;
+            }
+          };
+          env.rs.sync.findTasks = function() {
+            findTasksCalled++;
+            return promising().fulfill();
+          };
+          env.rs.sync.addTask = function() {
+            addTaskCalled++;
+          };
+          env.rs.sync.sync().then(function() {
+            test.assertAnd(doTasksCalled, 2);
+            test.assertAnd(findTasksCalled, 1);
+            env.rs.sync.addTask('/foo', function() {});
+            return env.rs.sync.sync();
+          }).then(function() {
+            test.assertAnd(doTasksCalled, 3);
+            test.assertAnd(findTasksCalled, 1);
+            env.rs.sync.doTasks = tmpDoTasks;
+            env.rs.sync.findTasks = tmpFindTasks;
+            env.rs.sync.addTasks = tmpAddTasks;
+            test.done();
+          });
         }
       },
       {
         desc: "findTasks calls checkDiffs and goes to checkRefresh only if necessary",
         run: function(env, test) {
-                test.assertAnd(env.rs.sync._tasks, {});
-                test.assertAnd(env.rs.sync._running, {});
-           var checkDiffsCalled = 0, checkRefreshCalled = 0,
-             tmpCheckDiffs = env.rs.sync.checkDiffs,
-             tmpCheckRefresh = env.rs.sync.checkRefresh,
-             haveDiffs = 0;
-           env.rs.sync.checkDiffs = function() {
-             checkDiffsCalled++;
-             return promising().fulfill(haveDiffs);
-           }
-           env.rs.sync.checkRefresh = function() {
-             checkRefreshCalled++;
-             return promising().fulfill([]);
-           }
-           env.rs.sync.findTasks().then(function() {
-             test.assertAnd(checkDiffsCalled, 1);
-             test.assertAnd(checkRefreshCalled, 1);
-             haveDiffs = 1;
-             return env.rs.sync.findTasks();
-           }).then(function() {
-             test.assertAnd(checkDiffsCalled, 2);
-             test.assertAnd(checkRefreshCalled, 1);
-             env.rs.sync.checkDiffs = tmpCheckDiffs;
-             env.rs.sync.checkRefresh = tmpCheckRefresh;
-             test.done();
-           });
+          test.assertAnd(env.rs.sync._tasks, {});
+          test.assertAnd(env.rs.sync._running, {});
+          var checkDiffsCalled = 0, checkRefreshCalled = 0,
+            tmpCheckDiffs = env.rs.sync.checkDiffs,
+            tmpCheckRefresh = env.rs.sync.checkRefresh,
+            haveDiffs = 0;
+          env.rs.sync.checkDiffs = function() {
+            checkDiffsCalled++;
+            return promising().fulfill(haveDiffs);
+          };
+          env.rs.sync.checkRefresh = function() {
+            checkRefreshCalled++;
+            return promising().fulfill([]);
+          };
+          env.rs.sync.findTasks().then(function() {
+            test.assertAnd(checkDiffsCalled, 1);
+            test.assertAnd(checkRefreshCalled, 1);
+            haveDiffs = 1;
+            return env.rs.sync.findTasks();
+          }).then(function() {
+            test.assertAnd(checkDiffsCalled, 2);
+            test.assertAnd(checkRefreshCalled, 1);
+            env.rs.sync.checkDiffs = tmpCheckDiffs;
+            env.rs.sync.checkRefresh = tmpCheckRefresh;
+            test.done();
+          });
         }
       },
      
       {
         desc: "checkRefresh gives preference to caching parent",
         run: function(env, test) {
-                test.assertAnd(env.rs.sync._tasks, {});
-                test.assertAnd(env.rs.sync._running, {});
+          test.assertAnd(env.rs.sync._tasks, {});
+          test.assertAnd(env.rs.sync._running, {});
           var tmpForAllNodes = env.rs.local.forAllNodes,
             tmpNow = env.rs.sync.now;
           env.rs.sync.now = function() {
             return 1234568654321;
-          }
+          };
           env.rs.local.forAllNodes = function(cb) {
             cb({
               path: '/foo/ba/and/then/some/sub/path', //should be overruled by ancestor /foo/ba/
@@ -350,8 +350,8 @@ define([], function() {
           };
           env.rs.sync.checkRefresh().then(function() {
             test.assertAnd(env.rs.sync._tasks, {
-             '/foo/': [],
-             '/read/access/': []
+              '/foo/': [],
+              '/read/access/': []
             });
             env.rs.local.forAllNodes = tmpForAllNodes;
             env.rs.sync.now = tmpNow;
@@ -362,8 +362,8 @@ define([], function() {
       {
         desc: "go through the request-queue with 4-8 requests at a time",
         run: function(env, test) {
-                test.assertAnd(env.rs.sync._tasks, {});
-                test.assertAnd(env.rs.sync._running, {});
+          test.assertAnd(env.rs.sync._tasks, {});
+          test.assertAnd(env.rs.sync._running, {});
           var tmpDoTask = env.rs.sync.doTask;
           env.rs.sync.doTask = function() {
             return promising().fulfill({
@@ -405,16 +405,16 @@ define([], function() {
             '/foo4/',
             '/foo/5'
           ].sort());
-         test.done();
-         env.rs.sync.doTask = tmpDoTask;
+          test.done();
+          env.rs.sync.doTask = tmpDoTask;
         }
       },
 
       {
         desc: "sync will attempt only one request, at low frequency, when not online",
         run: function(env, test) {
-                test.assertAnd(env.rs.sync._tasks, {});
-                test.assertAnd(env.rs.sync._running, {});
+          test.assertAnd(env.rs.sync._tasks, {});
+          test.assertAnd(env.rs.sync._running, {});
           var tmpDoTask = env.rs.sync.doTask;
           env.rs.sync.doTask = function() {
             return promising().fulfill({
@@ -452,16 +452,16 @@ define([], function() {
           test.assertAnd(Object.getOwnPropertyNames(env.rs.sync._running).sort(), [
             '/foo1/'
           ]);
-         test.done();
-         env.rs.sync.doTask = tmpDoTask;
+          test.done();
+          env.rs.sync.doTask = tmpDoTask;
         }
       },
 
       {
         desc: "sync will not attempt any requests when not connected",
         run: function(env, test) {
-                test.assertAnd(env.rs.sync._tasks, {});
-                test.assertAnd(env.rs.sync._running, {});
+          test.assertAnd(env.rs.sync._tasks, {});
+          test.assertAnd(env.rs.sync._running, {});
           env.rs.sync.numThreads = 5;
           env.rs.remote.connected = false;
           env.rs.sync._tasks = {

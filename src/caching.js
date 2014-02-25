@@ -28,7 +28,7 @@
     SEEN_AND_FOLDERS: { data: false },
     ALL: { data: true },
     pendingActivations: [],
-    
+   
     /**
      ** configuration methods
      **/
@@ -48,9 +48,9 @@
         } else {
           this.pendingActivations.push(path);
         }
-      } 
+      }
     },
-    
+   
     enable: function(path) {
       this.set(path, this.ALL);
     },
@@ -67,11 +67,11 @@
       }
       delete this.pendingActivations;
     },
-    
+   
     /**
      * Method: checkPath
-     * 
-     * 
+     *
+     *
      * retrieves caching setting to smallest tree containing path.
      **/
     checkPath: function(path) {
@@ -83,10 +83,10 @@
         return this.checkPath(containingFolder(path));
       }
     },
-    
+   
     /**
      * Method: reset
-     * 
+     *
      * resets the state of caching;
      * deletes all caching information.
      **/
@@ -108,7 +108,7 @@
       return caching;
     }
   });
-  
+ 
   RemoteStorage.Caching._rs_init = function() {};
 
 })(typeof(window) !== 'undefined' ? window : global);

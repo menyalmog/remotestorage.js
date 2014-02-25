@@ -11,11 +11,11 @@
   var  _isFolder = function(path) {
       return path.substr(-1) === '/';
     },
-    
+
     _isDocument = function(path) {
       return path.substr(-1) !== '/';
     },
-    
+
     _deepClone = function(obj) {
       if (obj === undefined) {
         return undefined;
@@ -23,13 +23,13 @@
         return JSON.parse(JSON.stringify(obj));
       }
     },
-    
+
     _equal = function(obj1, obj2) {
       return JSON.stringify(obj1) === JSON.stringify(obj2);
     },
-    
+
     _getLatest = function(node) {
-      if (typeof(node) !== 'object' || typeof(node.path) != 'string') {
+      if (typeof(node) !== 'object' || typeof(node.path) !== 'string') {
         return;
       }
       if (_isFolder(node.path)) {
@@ -83,18 +83,13 @@
       }
       return ret;
     };
-    
+
   var methods = {
     //GPD interface:
     get: function(path, maxAge) {
-//      RemoteStorage.log('get', path, maxAge);
       var promise = promising();
       this.getNodes([path]).then(function(objs) {
         var latest = _getLatest(objs[path]);
-//        RemoteStorage.log('maxAge', maxAge, (typeof(maxAge) === 'number'),
-//             !latest,
-//             !latest.timestamp,
-//             ((new Date().getTime()) - latest.timestamp > maxAge));
         if ((typeof(maxAge) === 'number') && (
              !latest ||
              !latest.timestamp ||
@@ -102,20 +97,20 @@
           remoteStorage.sync.queueGetRequest(path, promise);
           return promise;
         }
-        
+
         if (latest) {
-            promise.fulfill(200, latest.body || latest.itemsMap, latest.contentType);
+          promise.fulfill(200, latest.body || latest.itemsMap, latest.contentType);
         } else {
           promise.fulfill(404);
-        }       
+        }
       }.bind(this), function(err) {
         promise.reject(err);
       }.bind(this));
       return promise;
     },
     _updateNodes: function(nodePaths, cb) {
-       return this.getNodes(nodePaths).then(function(objs) {
-        var copyObjs = _deepClone(objs);
+      return this.getNodes(nodePaths).then(function(objs) {
+        var i, copyObjs = _deepClone(objs);
         objs = cb(objs);
         for (i in objs) {
           if (_equal(objs[i], copyObjs[i])) {
@@ -233,7 +228,7 @@
           var i, pending=0, allPaths = [path], latest = _getLatest(objs[path]), promise = promising();
           for (i in latest.itemsMap) {
             pending++;
-            var subPromise = this._getAllDescendentPaths(path+i)
+            var subPromise = this._getAllDescendentPaths(path+i);
             subPromise.then(function(paths) {
               var j;
               pending--;

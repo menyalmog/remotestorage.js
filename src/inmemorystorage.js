@@ -19,7 +19,6 @@
     },
 
     setNodes: function(objs) {
-    RemoteStorage.log('inmem setNodes');
       var i, promise = promising();
       for(i in objs) {
         if(objs[i] === undefined) {

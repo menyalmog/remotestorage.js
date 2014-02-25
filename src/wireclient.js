@@ -259,8 +259,8 @@
 
             if ((! mimeType) || mimeType.match(/charset=binary/)) {
               RS.WireClient.readBinaryData(response.response, mimeType, function(result) {
-              RemoteStorage.log('255 revision', revision);
-              promise.fulfill(response.status, result, mimeType, revision);
+                RemoteStorage.log('255 revision', revision);
+                promise.fulfill(response.status, result, mimeType, revision);
               });
             } else {
               if (mimeType && mimeType.match(/^application\/json/)) {

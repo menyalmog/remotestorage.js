@@ -179,7 +179,7 @@ define([], function() {
       {
         desc: "#connect sets the backend to remotestorage",
         run: function(env, test) {
-          localStorage ={};
+          localStorage = {};
           env.rs.connect('user@ho.st');
           test.assert(localStorage, {'remotestorage:backend': 'remotestorage'});
         }

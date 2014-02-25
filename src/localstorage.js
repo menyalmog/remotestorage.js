@@ -60,7 +60,6 @@
     },
 
     setNodes: function(objs) {
-    RemoteStorage.log('ls setNodes'); 
       var i, promise = promising();
       for(i in objs) {
         localStorage[NODES_PREFIX+i] = JSON.stringify(objs[i]);

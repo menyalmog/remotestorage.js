@@ -125,7 +125,7 @@ define(['requirejs'], function(requirejs) {
           test.assertAnd(env.ims._getInternals()._getLatest(commonNode).contentType, 'c');
           test.assertAnd(env.ims._getInternals()._getLatest(legacyNode).body, 'asdf');
           test.assertAnd(env.ims._getInternals()._getLatest(legacyNode).contentType, 'text/plain');
-          test.done()
+          test.done();
         }
       },
       {
@@ -162,11 +162,11 @@ define(['requirejs'], function(requirejs) {
           });
         }
       },
-      
+
       {
         desc: "this._getAllDescendentPaths",
         run: function(env, test) {
-          env.ims.put('/foo/bar/baz/baf', 'asdf', 'qwer').then(function() { 
+          env.ims.put('/foo/bar/baz/baf', 'asdf', 'qwer').then(function() {
             env.ims._getAllDescendentPaths('/').then(function(paths) {
               test.assertAnd(paths.sort(), ['/', '/foo/', '/foo/bar/', '/foo/bar/baz/', '/foo/bar/baz/baf'].sort());
               test.done();
@@ -174,11 +174,11 @@ define(['requirejs'], function(requirejs) {
           });
         }
       },
-      
+
       {
         desc: "flush",
         run: function(env, test) {
-          env.ims.put('/foo/bar/baz/baf', 'asdf', 'qwer').then(function() { 
+          env.ims.put('/foo/bar/baz/baf', 'asdf', 'qwer').then(function() {
             return env.ims.flush('/foo/bar/');
           }).then(function() {
             var count = 0;
@@ -189,7 +189,7 @@ define(['requirejs'], function(requirejs) {
               test.assertAnd(count, 2);
               test.done();
             });
-          })
+          });
         }
       }
     ]

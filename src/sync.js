@@ -22,7 +22,7 @@
       this.addTask(path);
       this.doTasks();
     }.bind(this));
-  }
+  };
   RemoteStorage.Sync.prototype = {
     now: function() {
       return new Date().getTime();
@@ -45,7 +45,7 @@
       var i;
       if ((typeof(itemsMap) !== 'object') ||
           (Array.isArray(itemsMap))) {
-         return true;
+        return true;
       }
       for (i in itemsMap) {
         if (typeof(itemsMap[i]) !== 'object') {
@@ -55,11 +55,11 @@
           return true;
         }
         if (i.substr(-1) === '/') {
-          if (i.substring(0, i.length-1).indexOf('/') != -1) {
+          if (i.substring(0, i.length-1).indexOf('/') !== -1) {
             return true;
           }
         } else {
-          if (i.indexOf('/') != -1) {
+          if (i.indexOf('/') !== -1) {
             return true;
           }
           if (force02) {
@@ -78,7 +78,7 @@
       var i;
       if ((typeof(itemsMap) !== 'object') ||
           (Array.isArray(itemsMap))) {
-         return true;
+        return true;
       }
       for (i in itemsMap) {
         if (typeof(itemsMap[i]) !== 'boolean') {
@@ -90,11 +90,11 @@
     corruptRevision: function(rev) {
       return ((typeof(rev) !== 'object') ||
           (Array.isArray(rev)) ||
-          (rev.revision && typeof(rev.revision) != 'string') ||
-          (rev.body && typeof(rev.body) != 'string' && typeof(rev.body) != 'object') ||
-          (rev.contentType && typeof(rev.contentType) != 'string') ||
-          (rev.contentLength && typeof(rev.contentLength) != 'number') ||
-          (rev.timestamp && typeof(rev.timestamp) != 'number') ||
+          (rev.revision && typeof(rev.revision) !== 'string') ||
+          (rev.body && typeof(rev.body) !== 'string' && typeof(rev.body) !== 'object') ||
+          (rev.contentType && typeof(rev.contentType) !== 'string') ||
+          (rev.contentLength && typeof(rev.contentLength) !== 'number') ||
+          (rev.timestamp && typeof(rev.timestamp) !== 'number') ||
           (rev.itemsMap && this.corruptItemsMap(rev.itemsMap)));
     },
     isCorrupt: function(node) {
@@ -114,13 +114,6 @@
         }
         if (this.isCorrupt(node, false)) {
           RemoteStorage.log('WARNING: corrupt node in local cache', node);
-          //RemoteStorage.log((typeof(node) !== 'object'),
-          //  (Array.isArray(node)),
-          //  (typeof(node.path) !== 'string'),
-          //  (this.corruptRevision(node.common)),
-          //  (node.local && this.corruptRevision(node.local)),
-          //  (node.remote && this.corruptRevision(node.remote)),
-          //  (node.push && this.corruptRevision(node.push)));
           if (typeof(node) === 'object' && node.path) {
             this.addTask(node.path);
             num++;
@@ -209,6 +202,7 @@
       });
     },
     flush: function(objs) {
+      var i;
       for (i in objs) {
         if (this.caching.checkPath(i) === this.caching.FLUSH && !objs[i].local) {//strategy is FLUSH and no local changes exist
           RemoteStorage.log('flushing', i);
@@ -294,7 +288,7 @@
       }.bind(this));
     },
     autoMerge: function(obj) {
-      var newValue, oldValue;
+      var newValue, oldValue, i;
       if (!obj.remote) {
         return obj;
       }
@@ -421,9 +415,6 @@
                 recurse[j+k] = true;
               }
             }
-            //TODO: emit remote change event here?
-            //and conflict event if there's a local?
-            //pass it through autoMerge for that maybe?
             changedObjs[j] = undefined;
           }
         }
@@ -466,10 +457,8 @@
             }
           }
         }
-              RemoteStorage.log('460');
         //recurse whole tree depth levels at once:
         return this.deleteRemoteTrees(Object.keys(subPaths), changedObjs).then(function(changedObjs2) {
-      RemoteStorage.log('463');
           return this.local.setNodes(this.flush(changedObjs2));
         }.bind(this));
       }.bind(this));
@@ -530,8 +519,8 @@
       return this.local.getNodes([path]).then(function(objs) {
         if (!objs[path].push) {
           RemoteStorage.log('whoops!', path, action, conflict, revision, objs);
-          throw new Error('completePush called but no push version!');
           this.stopped = true;
+          throw new Error('completePush called but no push version!');
         }
         if (conflict) {
           RemoteStorage.log('we have conflict');
@@ -579,7 +568,7 @@
           successful: false,
           networkProblems: true
         };
-      } 
+      }
       var series = Math.floor(statusCode / 100);
       return {
         successful: (series === 2 || statusCode === 304 || statusCode === 412 || statusCode === 404),
@@ -587,11 +576,11 @@
         unAuth: (statusCode === 401 || statusCode === 402 ||statusCode === 403),
         notFound: (statusCode === 404),
         changed: (statusCode !== 304)
-      }
+      };
     },
     handleResponse: function(path, action, status, bodyOrItemsMap, contentType, revision) {
       var statusMeaning = this.interpretStatus(status);
-      
+
       if (statusMeaning.successful) {
         if (action === 'get') {
           if (statusMeaning.notFound) {
@@ -653,7 +642,7 @@
           return this.handleResponse(obj.path, obj.action, status, bodyOrItemsMap, contentType, revision);
         }.bind(this), function(err) {
           RemoteStorage.log('wireclient rejects its promise!', obj.path, obj.action, err);
-          return this.handleResponse(obj.path, obj.action, 'offline'); 
+          return this.handleResponse(obj.path, obj.action, 'offline');
         }.bind(this)).then(function(completed) {
           delete this._timeStarted[obj.path];
           delete this._running[obj.path];
@@ -664,7 +653,6 @@
               }
               delete this._tasks[obj.path];
             }
-          } else {
           }
           this._emit('req-done');
           this.findTasks(false).then(function() {//see if there are any more tasks that are not refresh tasks
@@ -696,7 +684,7 @@
       }
     },
     doTasks: function() {
-      var numToHave, numAdded = 0, numToAdd;
+      var numToHave, numAdded = 0, numToAdd, path;
       if (this.remote.connected) {
         if (this.remote.online) {
           numToHave = this.numThreads;
@@ -721,15 +709,10 @@
           }
         }
       }
-      //this causes a Too Much Recursion error, not sure why:
-      //if (Object.getOwnPropertyNames(this._tasks).length === 0 || this.stopped) {
-      //  this._emit('done');
-      //}
       return (numAdded >= numToAdd);
     },
     findTasks: function(alsoCheckRefresh) {
       if (Object.getOwnPropertyNames(this._tasks).length > 0 || this.stopped) {
-        //RemoteStorage.log('have tasks or stopped; findTasks skipped');
         promise = promising();
         promise.fulfill();
         return promise;
@@ -828,7 +811,7 @@
   RemoteStorage.prototype.syncCycle = function() {
     if (this.sync.stopped) {
       return;
-    }  
+    }
     this.sync.on('done', function() {
       RemoteStorage.log('done caught! setting timer', this.getSyncInterval());
       if (!this.sync.stopped) {
@@ -853,7 +836,7 @@
     this.syncStopped = false;
     this.sync.sync();
   };
-    
+
   var syncCycleCb;
   RemoteStorage.Sync._rs_init = function(remoteStorage) {
     syncCycleCb = function() {
@@ -868,7 +851,7 @@
           remoteStorage.sync.stopped = true;
           delete remoteStorage.syncStopped;
         }
-      }  
+      }
       RemoteStorage.log('syncCycleCb calling syncCycle:');
       remoteStorage.syncCycle();
     };
