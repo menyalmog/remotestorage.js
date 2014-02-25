@@ -10,6 +10,7 @@
   };
 
   function stateSetter(widget, state) {
+    console.log('producing stateSetter for', state);
     return function() {
       RemoteStorage.log('setting state', state, arguments);
       if(state === 'initial') {
@@ -143,8 +144,10 @@
         }
       }.bind(this));
       this.view.on('disconnect', this.rs.disconnect.bind(this.rs));
-      if (this.rs.sync) {
-        this.view.on('sync', this.rs.sync.bind(this.rs));
+      if (typeof(this.rs.sync) === 'object' && typeof(this.rs.sync.sync) === 'function') {
+        this.view.on('sync', this.rs.sync.sync.bind(this.rs));
+      } else {
+        console.log('typeof this.rs.sync check fail', this.rs.sync);
       }
       try {
         this.view.on('reset', function(){
