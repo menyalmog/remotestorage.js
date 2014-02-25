@@ -574,6 +574,12 @@
       }.bind(this));
     },
     interpretStatus: function(statusCode) {
+      if (statusCode === 'offline' || statusCode === 'timeout') {
+        return {
+          successful: false,
+          networkProblems: true
+        };
+      } 
       var series = Math.floor(statusCode / 100);
       return {
         successful: (series === 2 || statusCode === 304 || statusCode === 412 || statusCode === 404),
@@ -630,6 +636,9 @@
         if (statusMeaning.unAuth) {
           remoteStorage._emit('error', new RemoteStorage.Unauthorized());
         }
+        if (statusMeaning.networkProblems) {
+          remoteStorage._emit('error', new RemoteStorage.SyncError());
+        }
         return this.dealWithFailure(path, action, statusMeaning).then(function() {
           return false;
         });
@@ -642,6 +651,9 @@
       } else {
         obj.promise.then(function(status, bodyOrItemsMap, contentType, revision) {
           return this.handleResponse(obj.path, obj.action, status, bodyOrItemsMap, contentType, revision);
+        }.bind(this), function(err) {
+          RemoteStorage.log('wireclient rejects its promise!', obj.path, obj.action, err);
+          return this.handleResponse(obj.path, obj.action, 'offline'); 
         }.bind(this)).then(function(completed) {
           delete this._timeStarted[obj.path];
           delete this._running[obj.path];
