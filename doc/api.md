@@ -5,7 +5,6 @@ Start by defining a module (check out the repo to reuse an existing one):
     remoteStorage.defineModule('name', function(privClient, pubCient) {
       //basics:
       privClient.cache(path, strategy); //*** new behavior in 0.10 ***//
-      privClient.flush(path); //*** new in 0.10 ***//
       privClient.on('change', function((evt) {}); //*** new behavior in 0.10 ***//
       return {
         exports: {
