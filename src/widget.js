@@ -120,6 +120,15 @@
       return this;
     },
 
+    linkWidgetToSync: function() {
+      if (typeof(this.rs.sync) === 'object' && typeof(this.rs.sync.sync) === 'function') {
+        this.view.on('sync', this.rs.sync.sync.bind(this.rs));
+      } else {
+        RemoteStorage.log('typeof this.rs.sync check fail', this.rs.sync);
+        setTimeout(this.linkWidgetToSync.bind(this), 1000);
+      }
+    },
+
     /**
     *   Method: setView(view)
     *    sets the view and initializes event listeners to
@@ -136,11 +145,7 @@
         }
       }.bind(this));
       this.view.on('disconnect', this.rs.disconnect.bind(this.rs));
-      if (typeof(this.rs.sync) === 'object' && typeof(this.rs.sync.sync) === 'function') {
-        this.view.on('sync', this.rs.sync.sync.bind(this.rs));
-      } else {
-        RemoteStorage.log('typeof this.rs.sync check fail', this.rs.sync);
-      }
+      this.linkWidgetToSync();
       try {
         this.view.on('reset', function(){
           var location = RemoteStorage.Authorize.getLocation();
