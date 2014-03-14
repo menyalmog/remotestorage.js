@@ -7,5 +7,4 @@ points that need fixing, as mentioned in the peer review of the remotestorage.js
 8 - add "... check the caching documentation for details" to changelog
 9 - changelog baseclient#get -> baseclient#get*
 10 - SEEN_AND_FOLDERS still defined in caching.js
-11 - maxAge param: Why can you give it true when it's supposed to take a number of ms? I think 0 would make much more sense and also be much cleaner as a public API.
 13 - cachinglayer.js: add explanation of what this class does, existing explanation is missing context
