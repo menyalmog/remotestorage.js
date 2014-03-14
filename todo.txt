@@ -4,4 +4,3 @@ points that need fixing, as mentioned in the peer review of the remotestorage.js
      (comment: only PUTs so far /basti)
 4 - sync button triggers 'undefined is not a function' or doesn't react at all
 5 - possibly uncaught errors in tests
-13 - cachinglayer.js: add explanation of what this class does, existing explanation is missing context
