@@ -7,8 +7,8 @@ All releases can also be found and downloaded on the
 
 This release contains a rewrite of the tree-based sync system.
 
-* A new `maxAge` parameter is available in baseclient#get, where you can
-  specify the maximum age of cached results (in ms). This replaces the
+* A new `maxAge` parameter is available in the various baseclient get... functions, where
+  you can specify the maximum age of cached results (in ms). This replaces the
   ready-queue from 0.9.0.
 * Caching of subtrees can now be configured as ALL, SEEN,
   or FlUSH. The second one means documents that were seen once, will stay synced.
