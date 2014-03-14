@@ -28,7 +28,6 @@
   }
 
   function errorsHandler(widget){
-    //decided to not store error state
     return function(error){
       if (error instanceof RemoteStorage.DiscoveryError) {
         console.error('discovery failed',  error, '"' + error.message + '"');
