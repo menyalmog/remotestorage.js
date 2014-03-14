@@ -12,7 +12,9 @@ This release contains a rewrite of the tree-based sync system.
   ready-queue from 0.9.0.
 * Caching of subtrees can now be configured as ALL, SEEN,
   or FlUSH. The second one means documents that were seen once, will stay synced.
-
+  Check the [caching documentation](http://remotestorage.io/doc/code/files/caching-js.html)
+  for details.
+ 
 ## 0.9.0 (December 2013)
 
 This release consists of awesome contributions from @skddc, @galfert, @ggrin,
