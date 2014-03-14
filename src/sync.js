@@ -380,11 +380,7 @@
               }
             } else {
               cachingStrategy = this.caching.checkPath(j);
-              if(j.substr(-1) === '/') {
-                create = (cachingStrategy === this.caching.SEEN_AND_FOLDERS || cachingStrategy === this.caching.ALL);
-              } else {
-                create = (cachingStrategy === this.caching.ALL);
-              }
+              create = (cachingStrategy === this.caching.ALL);
               if (create) {
                 changedObjs[j] = {
                   path: j,

@@ -469,10 +469,10 @@
         strategy = this.storage.caching.ALL;
       }
       if (strategy !== this.storage.caching.SEEN &&
-          strategy !== this.storage.caching.SEEN_AND_FOLDERS &&
+          strategy !== this.storage.caching.FLUSH &&
           strategy !== this.storage.caching.ALL) {
         throw 'Argument \'strategy\' of baseclient.cache must be one of '
-            + '[remoteStorage.caching.SEEN, remoteStorage.caching.SEEN_AND_FOLDERS, remoteStorage.caching.ALL]';
+            + '[remoteStorage.caching.SEEN, remoteStorage.caching.FLUSH, remoteStorage.caching.ALL]';
       }
       this.storage.caching.set(this.makePath(path), strategy);
     },

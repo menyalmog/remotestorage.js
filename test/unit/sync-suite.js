@@ -8,9 +8,6 @@ define([], function() {
   function FakeCaching(){
     this.FLUSH = 0;
     this.SEEN = 1;
-    this.FOLDERS = 2;
-    this.SEEN_AND_FOLDERS = 3;
-    this.DOCUMENTS = 4;
     this.ALL = 7;
     
     this._responses = {};

@@ -46,7 +46,6 @@
   RemoteStorage.Caching.prototype = {
     FLUSH: false,
     SEEN: 'seen',
-    SEEN_AND_FOLDERS: { data: false },
     ALL: { data: true },
     pendingActivations: [],
 
@@ -72,7 +71,7 @@
 
       this._rootPaths[path] = value;
 
-      if (value === this.SEEN_AND_FOLDERS || value === this.ALL) {
+      if (value === this.ALL) {
         if (this.activateHandler) {
           this.activateHandler(path);
         } else {
