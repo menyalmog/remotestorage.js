@@ -10,7 +10,7 @@
   };
 
   function stateSetter(widget, state) {
-    console.log('producing stateSetter for', state);
+    RemoteStorage.log('producing stateSetter for', state);
     return function() {
       RemoteStorage.log('setting state', state, arguments);
       if (hasLocalStorage) {
@@ -140,7 +140,7 @@
       if (typeof(this.rs.sync) === 'object' && typeof(this.rs.sync.sync) === 'function') {
         this.view.on('sync', this.rs.sync.sync.bind(this.rs));
       } else {
-        console.log('typeof this.rs.sync check fail', this.rs.sync);
+        RemoteStorage.log('typeof this.rs.sync check fail', this.rs.sync);
       }
       try {
         this.view.on('reset', function(){

@@ -157,7 +157,7 @@
      *   (start code)
      *   client.getListing('').then(function(listing) {
      *     listing.forEach(function(item) {
-     *       RemoteStorage.log(item);
+     *       console.log(item);
      *     });
      *   });
      *   (end code)
@@ -195,7 +195,7 @@
      *   (start code)
      *   client.getAll('').then(function(objects) {
      *     for (var key in objects) {
-     *       console.log('- ' + key + ': ', objects[key]);
+     *       RemoteStorage.log('- ' + key + ': ', objects[key]);
      *     }
      *   });
      *   (end code)
