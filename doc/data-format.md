@@ -59,9 +59,10 @@ Each of local, push, remote, and common can have,
     * revision
     * timestamp
 
-timestamp is the time when this data was written (local), push was initiated
-(push), fetch/push was completed (remote), or agreement was reached
-(common).
+local.timestamp is the time when this data was written.
+push.timestamp is the time when this push was initiated
+remote.timestamp is the time when this fetch/push was completed
+common.timestamp is the time when agreement was reached
 
 # Caching strategies
 

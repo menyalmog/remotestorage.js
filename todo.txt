@@ -4,7 +4,6 @@ points that need fixing, as mentioned in the peer review of the remotestorage.js
      (comment: only PUTs so far /basti)
 4 - sync button triggers 'undefined is not a function' or doesn't react at all
 5 - possibly uncaught errors in tests
-6 - doc/data-format.md line 62 unclear
 7 - doc/data-format.md Caching Strategies: This whole paragraph is not easy enough to understand, and also some  formatting would help. But instead of having it in a separate document, 
     @skddc and @galfert both think it should be documented directly in the code and become the  introductory content of http://remotestorage.io/doc/code/files/caching-js.html
 8 - add "... check the caching documentation for details" to changelog
