@@ -1,0 +1,4 @@
+points that need fixing, as mentioned in the peer review of the remotestorage.js sync-per-node pull request, starting at https://github.com/remotestorage/remotestorage.js/pull/595#issuecomment-37094704
+
+3 - when using https://github.com/skddc/webmarks/tree/rs-0.10 on an -01 5apps account (simple will no longer be supported from now on), the same requests repeat indefinitely
+     (comment: only PUTs so far /basti)

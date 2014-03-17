@@ -195,7 +195,7 @@
      *   (start code)
      *   client.getAll('').then(function(objects) {
      *     for (var key in objects) {
-     *       console.log('- ' + key + ': ', objects[key]);
+     *       RemoteStorage.log('- ' + key + ': ', objects[key]);
      *     }
      *   });
      *   (end code)

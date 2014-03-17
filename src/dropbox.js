@@ -144,7 +144,7 @@
       }
     };
 
-    RS.eventHandling(this, 'change', 'connected');
+    RS.eventHandling(this, 'change', 'connected', 'wire-busy', 'wire-done', 'not-connected');
     rs.on('error', onErrorCb);
 
     this.clientId = rs.apiKeys.dropbox.api_key;
@@ -211,6 +211,13 @@
                                                        userAddress: this.userAddress } );
       }
     },
+    
+    stopWaitingForToken: function() {
+      if (!this.connected) {
+        this._emit('not-connected');
+      }
+    },
+    
     /**
      * Method : _getFolder(path, options)
      **/
