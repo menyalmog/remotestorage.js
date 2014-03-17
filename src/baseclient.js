@@ -1,7 +1,7 @@
 (function(global) {
 
   function deprecate(thing, replacement) {
-    RemoteStorage.log('WARNING: ' + thing + ' is deprecated. Use ' +
+    console.log('WARNING: ' + thing + ' is deprecated. Use ' +
                 replacement + ' instead.');
   }
 
