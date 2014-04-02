@@ -483,6 +483,17 @@
                 recurse[nodePath+localItem] = true;
               }
             }
+
+            // remotely removed node
+            if (node.common && node.common.body) {
+              this.local._emit('change', {
+                origin:   'remote',
+                path:     node.path,
+                oldValue: node.common.body,
+                newValue: false
+              });
+            }
+
             changedNodes[nodePath] = undefined;
           }
         }
